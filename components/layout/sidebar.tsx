@@ -1,0 +1,107 @@
+"use client"
+
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import {
+  LayoutDashboard,
+  BookOpen,
+  GraduationCap,
+  CheckCircle2,
+  BarChart2,
+  Users,
+  Library,
+  Settings,
+  BadgeCheck,
+  FileText,
+  MessageSquare,
+  Bell,
+  ShieldCheck,
+  Banknote,
+  UserCog,
+} from "lucide-react"
+import { cn } from "@/lib/utils"
+
+type Role = "student" | "instructor" | "admin"
+
+export function Sidebar({ userRole }: { userRole: Role }) {
+  const pathname = usePathname()
+
+  // Menús por rol
+  const studentItems = [
+    { label: "Inicio", href: "/dashboard/student", icon: LayoutDashboard },
+    { label: "Mis Cursos", href: "/dashboard/student/courses", icon: BookOpen },
+    { label: "Certificados", href: "/dashboard/student/certificates", icon: CheckCircle2 },
+    { label: "Foros", href: "/dashboard/student/discussions", icon: MessageSquare },
+    { label: "Notificaciones", href: "/dashboard/student/notifications", icon: Bell },
+    { label: "Configuración", href: "/dashboard/student/settings", icon: Settings },
+  ]
+
+  const instructorItems = [
+    { label: "Inicio", href: "/dashboard/instructor", icon: LayoutDashboard },
+    { label: "Mis Cursos", href: "/dashboard/instructor/courses", icon: Library },
+    { label: "Estudiantes", href: "/dashboard/instructor/students", icon: Users },
+    { label: "Evaluaciones", href: "/dashboard/instructor/quizzes", icon: FileText },
+    { label: "Reseñas", href: "/dashboard/instructor/reviews", icon: BadgeCheck },
+    { label: "Analítica", href: "/dashboard/instructor/analytics", icon: BarChart2 },
+    { label: "Configuración", href: "/dashboard/instructor/settings", icon: Settings },
+  ]
+
+  const adminItems = [
+    { label: "Panel", href: "/dashboard/admin", icon: LayoutDashboard },
+    { label: "Usuarios", href: "/dashboard/admin/users", icon: Users },
+    { label: "Cursos", href: "/dashboard/admin/courses", icon: Library },
+    { label: "Pagos", href: "/dashboard/admin/payments", icon: Banknote },
+    { label: "Moderación", href: "/dashboard/admin/moderation", icon: ShieldCheck },
+    { label: "Analítica", href: "/dashboard/admin/analytics", icon: BarChart2 },
+    { label: "Configuración", href: "/dashboard/admin/settings", icon: Settings },
+  ]
+
+  const items =
+    userRole === "student" ? studentItems : userRole === "instructor" ? instructorItems : adminItems
+
+  return (
+    <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 shrink-0 border-r bg-white md:block">
+      <div className="flex h-full flex-col">
+        {/* Brand */}
+        <div className="flex h-16 items-center border-b px-4">
+          <Link href="/" className="flex items-center gap-2">
+            <GraduationCap className="h-6 w-6 text-purple-700" />
+            <span className="text-lg font-bold text-gray-900">Dental LMS</span>
+          </Link>
+        </div>
+
+        {/* Navegación */}
+        <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+          {items.map((item) => {
+            const Icon = item.icon
+            // Activo si es ruta exacta o subruta (p. ej. /dashboard/student/courses/123)
+            const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+                  isActive
+                    ? "bg-purple-50 text-purple-900"
+                    : "text-gray-700 hover:bg-gray-50 hover:text-gray-900",
+                )}
+              >
+                <Icon className={cn("h-4 w-4", isActive ? "text-purple-800" : "text-gray-500")} />
+                <span className="font-medium">{item.label}</span>
+              </Link>
+            )
+          })}
+        </nav>
+
+        {/* Footer */}
+        <div className="border-t p-3">
+          <div className="rounded-lg bg-gray-50 p-3 text-xs text-gray-600">
+            Sesión como:{" "}
+            <span className="font-medium capitalize">{userRole === "admin" ? "Administrador" : userRole}</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+  )
+}

@@ -1,0 +1,12 @@
+import { type NextRequest, NextResponse } from "next/server"
+import { getIronSession } from "iron-session"
+import { sessionOptions, type SessionData } from "@/lib/session"
+
+export async function POST(request: NextRequest) {
+  const response = NextResponse.json({ message: "Logged out successfully" })
+  const session = await getIronSession<SessionData>(request, response, sessionOptions)
+
+  session.destroy()
+
+  return response
+}

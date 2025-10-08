@@ -1,0 +1,154 @@
+{
+  "course_contents": {
+    "description": "Flexible course content with lessons, videos, materials",
+    "schema": {
+      "courseId": "string (UUID)",
+      "content": {
+        "lessons": [
+          {
+            "id": "string",
+            "title": "string",
+            "description": "string",
+            "type": "video|text|quiz|assignment",
+            "duration": "number (minutes)",
+            "videoUrl": "string",
+            "materials": [
+              {
+                "name": "string",
+                "url": "string",
+                "type": "pdf|doc|image|video"
+              }
+            ],
+            "quiz": {
+              "questions": [
+                {
+                  "question": "string",
+                  "type": "multiple_choice|true_false|essay",
+                  "options": ["string"],
+                  "correctAnswer": "string|number",
+                  "explanation": "string"
+                }
+              ]
+            }
+          }
+        ],
+        "modules": [
+          {
+            "id": "string",
+            "title": "string",
+            "lessons": ["string (lesson IDs)"]
+          }
+        ]
+      },
+      "version": "number",
+      "createdAt": "Date",
+      "updatedAt": "Date"
+    }
+  },
+
+  "student_progress": {
+    "description": "Detailed student progress tracking",
+    "schema": {
+      "studentId": "string (UUID)",
+      "courseId": "string (UUID)",
+      "progress": {
+        "completedLessons": ["string (lesson IDs)"],
+        "currentLesson": "string (lesson ID)",
+        "timeSpent": "number (minutes)",
+        "quizScores": [
+          {
+            "lessonId": "string",
+            "score": "number",
+            "maxScore": "number",
+            "attempts": "number",
+            "completedAt": "Date"
+          }
+        ],
+        "notes": [
+          {
+            "lessonId": "string",
+            "content": "string",
+            "timestamp": "number (video time)",
+            "createdAt": "Date"
+          }
+        ],
+        "bookmarks": [
+          {
+            "lessonId": "string",
+            "timestamp": "number",
+            "note": "string"
+          }
+        ]
+      },
+      "lastAccessed": "Date"
+    }
+  },
+
+  "forum_posts": {
+    "description": "Course discussion forums",
+    "schema": {
+      "courseId": "string (UUID)",
+      "authorId": "string (UUID)",
+      "authorName": "string",
+      "title": "string",
+      "content": "string",
+      "lessonId": "string (optional)",
+      "replies": [
+        {
+          "id": "string",
+          "authorId": "string",
+          "authorName": "string",
+          "content": "string",
+          "createdAt": "Date",
+          "likes": "number"
+        }
+      ],
+      "tags": ["string"],
+      "likes": "number",
+      "views": "number",
+      "isPinned": "boolean",
+      "isResolved": "boolean",
+      "createdAt": "Date",
+      "updatedAt": "Date"
+    }
+  },
+
+  "learning_analytics": {
+    "description": "Learning behavior analytics",
+    "schema": {
+      "studentId": "string (UUID)",
+      "courseId": "string (UUID)",
+      "activity": {
+        "type": "lesson_start|lesson_complete|quiz_attempt|video_pause|video_seek",
+        "lessonId": "string",
+        "timestamp": "Date",
+        "data": "object (flexible based on activity type)",
+        "sessionId": "string",
+        "deviceInfo": {
+          "userAgent": "string",
+          "platform": "string",
+          "screenSize": "string"
+        }
+      },
+      "processed": "boolean",
+      "timestamp": "Date"
+    }
+  },
+
+  "notifications": {
+    "description": "User notifications",
+    "schema": {
+      "userId": "string (UUID)",
+      "type": "course_update|assignment_due|certificate_ready|forum_reply",
+      "title": "string",
+      "message": "string",
+      "data": "object (additional context)",
+      "channels": ["email", "push", "in_app"],
+      "priority": "low|normal|high|urgent",
+      "read": "boolean",
+      "delivered": "boolean",
+      "scheduledFor": "Date (optional)",
+      "createdAt": "Date"
+    }
+  }
+}
