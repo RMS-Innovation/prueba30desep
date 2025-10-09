@@ -221,7 +221,7 @@ export function RegisterForm() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="licenseNumber">Número de Licencia</Label>
+                <Label htmlFor="licenseNumber">Cédula Profesional</Label>
                 <Input
                   id="licenseNumber"
                   value={formData.licenseNumber}
