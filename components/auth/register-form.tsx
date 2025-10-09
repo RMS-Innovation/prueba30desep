@@ -1,5 +1,7 @@
 "use client"
 
+// Componente de formulario de registro de nuevos usuarios
+// Permite crear cuentas de estudiante o instructor con campos específicos por rol
 import type React from "react"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
@@ -13,21 +15,26 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Eye, EyeOff, CheckCircle } from "lucide-react"
 
 export function RegisterForm() {
+  // Estado para controlar el montaje del componente
   const [mounted, setMounted] = useState(false)
+
+  // Estado del formulario con todos los campos necesarios
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     confirmPassword: "",
     firstName: "",
     lastName: "",
-    role: "",
+    role: "", // "student" o "instructor"
     phone: "",
-    specialization: "",
-    licenseNumber: "",
+    specialization: "", // Solo para instructores
+    licenseNumber: "", // Solo para instructores
   })
+
+  // Estados de UI
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
-  const [success, setSuccess] = useState(false)
+  const [success, setSuccess] = useState(false) // Muestra mensaje de éxito
   const [loading, setLoading] = useState(false)
 
   const router = useRouter()
@@ -36,10 +43,12 @@ export function RegisterForm() {
     setMounted(true)
   }, [])
 
+  // Función helper para actualizar campos del formulario
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
+  // Función para llamar al API de registro
   const register = async (data: any) => {
     try {
       const res = await fetch("/api/auth/register", {
@@ -53,17 +62,20 @@ export function RegisterForm() {
     }
   }
 
+  // Maneja el envío del formulario con validaciones
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
     setLoading(true)
 
+    // Validación: contraseñas deben coincidir
     if (formData.password !== formData.confirmPassword) {
       setError("Las contraseñas no coinciden")
       setLoading(false)
       return
     }
 
+    // Validación: contraseña mínima de 8 caracteres
     if (formData.password.length < 8) {
       setError("La contraseña debe tener al menos 8 caracteres")
       setLoading(false)
@@ -71,6 +83,7 @@ export function RegisterForm() {
     }
 
     try {
+      // Llama al API de registro con los datos del formulario
       const result = await register({
         email: formData.email,
         password: formData.password,
@@ -84,6 +97,7 @@ export function RegisterForm() {
 
       if (result.success) {
         setSuccess(true)
+        // Redirige al login después de 2 segundos
         setTimeout(() => {
           router.push("/auth/login?message=registered")
         }, 2000)
@@ -97,6 +111,7 @@ export function RegisterForm() {
     }
   }
 
+  // Skeleton loader mientras se monta el componente
   if (!mounted) {
     return (
       <Card className="w-full max-w-md mx-auto shadow-xl border-0 bg-card/95 backdrop-blur-sm">
@@ -110,6 +125,7 @@ export function RegisterForm() {
     )
   }
 
+  // Pantalla de éxito después del registro
   if (success) {
     return (
       <Card className="w-full max-w-md mx-auto shadow-xl border-0 bg-card/95 backdrop-blur-sm">
@@ -134,13 +150,14 @@ export function RegisterForm() {
       </CardHeader>
       <CardContent className="space-y-6">
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Mensaje de error si existe */}
           {error && (
             <Alert variant="destructive" className="border-destructive/20 bg-destructive/5">
               <AlertDescription className="text-destructive">{error}</AlertDescription>
             </Alert>
           )}
 
-          {/* Nombre y Apellido */}
+          {/* Campos de nombre y apellido en grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="firstName">Nombre</Label>
@@ -164,7 +181,7 @@ export function RegisterForm() {
             </div>
           </div>
 
-          {/* Email */}
+          {/* Campo de email */}
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -177,7 +194,7 @@ export function RegisterForm() {
             />
           </div>
 
-          {/* Rol */}
+          {/* Selector de rol (estudiante o instructor) */}
           <div className="space-y-2">
             <Label htmlFor="role">Tipo de cuenta</Label>
             <Select value={formData.role} onValueChange={(value) => handleChange("role", value)}>
@@ -191,7 +208,7 @@ export function RegisterForm() {
             </Select>
           </div>
 
-          {/* Datos extra si es instructor */}
+          {/* Campos adicionales solo para instructores */}
           {formData.role === "instructor" && (
             <>
               <div className="space-y-2">
@@ -215,7 +232,7 @@ export function RegisterForm() {
             </>
           )}
 
-          {/* Teléfono */}
+          {/* Campo de teléfono (opcional) */}
           <div className="space-y-2">
             <Label htmlFor="phone">Teléfono (opcional)</Label>
             <Input
@@ -227,7 +244,7 @@ export function RegisterForm() {
             />
           </div>
 
-          {/* Contraseña */}
+          {/* Campo de contraseña con botón para mostrar/ocultar */}
           <div className="space-y-2">
             <Label htmlFor="password">Contraseña</Label>
             <div className="relative">
@@ -252,7 +269,7 @@ export function RegisterForm() {
             </div>
           </div>
 
-          {/* Confirmar contraseña */}
+          {/* Campo de confirmación de contraseña */}
           <div className="space-y-2">
             <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
             <Input
@@ -265,7 +282,7 @@ export function RegisterForm() {
             />
           </div>
 
-          {/* Botón */}
+          {/* Botón de envío con estado de carga */}
           <Button type="submit" disabled={loading} className="w-full">
             {loading ? (
               <>
@@ -278,6 +295,7 @@ export function RegisterForm() {
           </Button>
         </form>
 
+        {/* Enlace a página de login */}
         <div className="mt-6 text-center text-sm">
           <span className="text-muted-foreground">¿Ya tienes cuenta? </span>
           <Link href="/auth/login" className="text-primary hover:underline">

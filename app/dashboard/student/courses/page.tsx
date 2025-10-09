@@ -184,6 +184,7 @@ export default function StudentCoursesPage() {
 
           <div className="mb-6">
             <div className="flex flex-col md:flex-row gap-4 mb-4">
+              {/* Barra de búsqueda */}
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
@@ -193,6 +194,8 @@ export default function StudentCoursesPage() {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
+
+              {/* Filtro por categoría */}
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                 <SelectTrigger className="w-full md:w-48">
                   <SelectValue placeholder="Filtrar por categoría" />
@@ -206,6 +209,8 @@ export default function StudentCoursesPage() {
                   <SelectItem value="periodoncia">Periodoncia</SelectItem>
                 </SelectContent>
               </Select>
+
+              {/* Filtro por estado del curso */}
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-full md:w-48">
                   <SelectValue placeholder="Estado del curso" />
@@ -219,6 +224,7 @@ export default function StudentCoursesPage() {
               </Select>
             </div>
 
+            {/* Muestra los filtros activos con badges */}
             {(searchTerm || categoryFilter !== "all" || statusFilter !== "all") && (
               <div className="flex items-center gap-2 mb-4">
                 <span className="text-sm text-gray-600">Filtros activos:</span>
@@ -243,11 +249,13 @@ export default function StudentCoursesPage() {
               </div>
             )}
 
+            {/* Contador de resultados */}
             <p className="text-sm text-gray-600">
               Mostrando {filteredCourses.length} de {courses.length} cursos
             </p>
           </div>
 
+          {/* Mensaje cuando no hay resultados */}
           {filteredCourses.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-gray-400 mb-4">
@@ -260,10 +268,10 @@ export default function StudentCoursesPage() {
               </Button>
             </div>
           ) : (
-            /* Courses Grid */
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredCourses.map((course) => (
                 <Card key={course.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                  {/* Imagen del curso con badge de estado */}
                   <div className="relative">
                     <img
                       src={course.thumbnail || "/placeholder.svg"}
@@ -288,6 +296,7 @@ export default function StudentCoursesPage() {
                     </Badge>
                   </div>
 
+                  {/* Información del curso */}
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div>
@@ -295,13 +304,12 @@ export default function StudentCoursesPage() {
                         <p className="text-sm text-gray-600 mb-2">Por {course.instructor}</p>
                       </div>
                     </div>
-
                     <p className="text-sm text-gray-700 line-clamp-2">{course.description}</p>
                   </CardHeader>
 
                   <CardContent>
                     <div className="space-y-4">
-                      {/* Progress Bar */}
+                      {/* Barra de progreso del curso */}
                       <div>
                         <div className="flex justify-between text-sm text-gray-600 mb-1">
                           <span>Progreso</span>
@@ -318,7 +326,7 @@ export default function StudentCoursesPage() {
                         </p>
                       </div>
 
-                      {/* Course Info */}
+                      {/* Información adicional del curso */}
                       <div className="flex items-center justify-between text-sm text-gray-600">
                         <div className="flex items-center">
                           <Clock className="w-4 h-4 mr-1" />
@@ -334,14 +342,17 @@ export default function StudentCoursesPage() {
                         </div>
                       </div>
 
+                      {/* Botón para acceder al curso */}
                       <Button className="w-full bg-purple-800 hover:bg-purple-900" asChild>
                         <Link href={`/dashboard/student/course/${course.id}`}>
-                          <Play className="w-4 h-4 mr-2" />
-                          {course.status === "completed"
-                            ? "Revisar Curso"
-                            : course.status === "not_started"
-                              ? "Comenzar Curso"
-                              : "Continuar"}
+                          <div className="flex items-center justify-center">
+                            <Play className="w-4 h-4 mr-2" />
+                            {course.status === "completed"
+                              ? "Revisar Curso"
+                              : course.status === "not_started"
+                                ? "Comenzar Curso"
+                                : "Continuar"}
+                          </div>
                         </Link>
                       </Button>
                     </div>

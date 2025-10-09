@@ -1,3 +1,17 @@
+/**
+ * Landing Page Principal
+ *
+ * Esta es la página de inicio de la plataforma educativa dental.
+ * Muestra información general, características, beneficios y enlaces a las secciones principales.
+ *
+ * Funcionalidades:
+ * - Redirección automática a dashboard según el rol del usuario autenticado
+ * - Hero section con llamados a la acción
+ * - Sección de características principales
+ * - Testimonios y beneficios
+ * - Footer con enlaces a todas las páginas importantes
+ */
+
 import { getSession } from "@/lib/session"
 import { Button } from "@/components/ui/button"
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -17,26 +31,31 @@ import {
 } from "lucide-react"
 
 export default async function HomePage() {
+  // Obtener la sesión del usuario actual
   const session = await getSession()
 
-  // If user is authenticated, redirect to their dashboard
+  // Si el usuario está autenticado, redirigir a su dashboard correspondiente según su rol
   if (session?.user) {
     switch (session.user.role) {
       case "admin":
+        // Administradores van al dashboard de administración
         return <script>window.location.href = "/dashboard/admin"</script>
       case "instructor":
+        // Instructores van al dashboard de instructor
         return <script>window.location.href = "/dashboard/instructor"</script>
       case "student":
       default:
+        // Estudiantes van al dashboard de estudiante
         return <script>window.location.href = "/dashboard/student"</script>
     }
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50">
-      {/* Header */}
+      {/* Header - Barra de navegación superior */}
       <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          {/* Logo y nombre de la plataforma */}
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-purple-700 rounded-xl flex items-center justify-center">
               <Stethoscope className="w-6 h-6 text-white" />
@@ -48,6 +67,8 @@ export default async function HomePage() {
               <p className="text-sm text-gray-600">Instituto Autónomo del Norte</p>
             </div>
           </div>
+
+          {/* Botones de autenticación */}
           <div className="flex items-center space-x-4">
             <Link href="/auth/login">
               <Button variant="ghost" className="text-purple-700 hover:text-purple-800">
@@ -63,19 +84,26 @@ export default async function HomePage() {
         </div>
       </header>
 
-      {/* Hero Section */}
+      {/* Hero Section - Sección principal con título y llamados a la acción */}
       <section className="py-20 px-4">
         <div className="container mx-auto text-center max-w-4xl">
+          {/* Badge destacado */}
           <Badge className="mb-6 bg-purple-100 text-purple-700 hover:bg-purple-200">
             🦷 Educación Dental Especializada
           </Badge>
+
+          {/* Título principal */}
           <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-purple-600 via-purple-700 to-purple-800 bg-clip-text text-transparent leading-tight">
             Actualiza tus conocimientos dentales con cursos especializados
           </h1>
+
+          {/* Descripción */}
           <p className="text-xl text-gray-600 mb-8 leading-relaxed">
             Accede a contenido exclusivo del Instituto Autónomo del Norte. Cursos pregrabados, talleres prácticos y
             certificaciones digitales para profesionales dentales.
           </p>
+
+          {/* Botones de acción */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/auth/register">
               <Button
@@ -98,7 +126,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* Features Section - Características principales de la plataforma */}
       <section className="py-16 px-4 bg-white">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-12">
@@ -106,7 +134,9 @@ export default async function HomePage() {
             <p className="text-xl text-gray-600">Diseñada específicamente para profesionales dentales modernos</p>
           </div>
 
+          {/* Grid de características */}
           <div className="grid md:grid-cols-3 gap-8">
+            {/* Característica 1: Cursos Especializados */}
             <Card className="border-purple-100 hover:shadow-lg transition-shadow">
               <CardHeader>
                 <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
@@ -119,6 +149,7 @@ export default async function HomePage() {
               </CardHeader>
             </Card>
 
+            {/* Característica 2: Certificaciones Digitales */}
             <Card className="border-purple-100 hover:shadow-lg transition-shadow">
               <CardHeader>
                 <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
@@ -131,6 +162,7 @@ export default async function HomePage() {
               </CardHeader>
             </Card>
 
+            {/* Característica 3: Comunidad Profesional */}
             <Card className="border-purple-100 hover:shadow-lg transition-shadow">
               <CardHeader>
                 <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
@@ -144,15 +176,17 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Benefits Section */}
+      {/* Benefits Section - Beneficios y testimonios */}
       <section className="py-16 px-4 bg-gradient-to-r from-purple-50 to-purple-100">
         <div className="container mx-auto max-w-6xl">
           <div className="grid md:grid-cols-2 gap-12 items-center">
+            {/* Lista de beneficios */}
             <div>
               <h2 className="text-3xl md:text-4xl font-bold mb-6 text-gray-900">
                 Flexibilidad total para tu crecimiento profesional
               </h2>
               <div className="space-y-4">
+                {/* Beneficio 1 */}
                 <div className="flex items-start space-x-3">
                   <CheckCircle className="w-6 h-6 text-purple-600 mt-1 flex-shrink-0" />
                   <div>
@@ -160,6 +194,8 @@ export default async function HomePage() {
                     <p className="text-gray-600">Estudia cuando y donde quieras, sin restricciones de horario</p>
                   </div>
                 </div>
+
+                {/* Beneficio 2 */}
                 <div className="flex items-start space-x-3">
                   <CheckCircle className="w-6 h-6 text-purple-600 mt-1 flex-shrink-0" />
                   <div>
@@ -167,6 +203,8 @@ export default async function HomePage() {
                     <p className="text-gray-600">Cursos constantemente actualizados con las últimas tendencias</p>
                   </div>
                 </div>
+
+                {/* Beneficio 3 */}
                 <div className="flex items-start space-x-3">
                   <CheckCircle className="w-6 h-6 text-purple-600 mt-1 flex-shrink-0" />
                   <div>
@@ -174,6 +212,8 @@ export default async function HomePage() {
                     <p className="text-gray-600">Sesiones hands-on para aplicar conocimientos teóricos</p>
                   </div>
                 </div>
+
+                {/* Beneficio 4 */}
                 <div className="flex items-start space-x-3">
                   <CheckCircle className="w-6 h-6 text-purple-600 mt-1 flex-shrink-0" />
                   <div>
@@ -183,6 +223,8 @@ export default async function HomePage() {
                 </div>
               </div>
             </div>
+
+            {/* Testimonio */}
             <div className="relative">
               <div className="bg-white rounded-2xl shadow-xl p-8">
                 <div className="flex items-center space-x-4 mb-6">
@@ -194,6 +236,7 @@ export default async function HomePage() {
                     <p className="text-gray-600">Especialista en Implantología</p>
                   </div>
                 </div>
+                {/* Rating con estrellas */}
                 <div className="flex mb-4">
                   {[...Array(5)].map((_, i) => (
                     <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
@@ -209,7 +252,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* CTA Section - Llamado a la acción final */}
       <section className="py-20 px-4 bg-gradient-to-r from-purple-600 to-purple-800">
         <div className="container mx-auto text-center max-w-4xl">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">¿Listo para impulsar tu carrera dental?</h2>
@@ -235,10 +278,11 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Footer */}
+      {/* Footer - Pie de página con enlaces a todas las secciones */}
       <footer className="bg-gray-900 text-white py-12 px-4">
         <div className="container mx-auto max-w-6xl">
           <div className="grid md:grid-cols-4 gap-8">
+            {/* Columna 1: Logo y descripción */}
             <div>
               <div className="flex items-center space-x-3 mb-4">
                 <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-purple-700 rounded-lg flex items-center justify-center">
@@ -250,6 +294,8 @@ export default async function HomePage() {
                 Instituto Autónomo del Norte - Educación dental especializada para profesionales modernos.
               </p>
             </div>
+
+            {/* Columna 2: Enlaces de Plataforma */}
             <div>
               <h3 className="font-semibold mb-4">Plataforma</h3>
               <ul className="space-y-2 text-gray-400">
@@ -270,6 +316,8 @@ export default async function HomePage() {
                 </li>
               </ul>
             </div>
+
+            {/* Columna 3: Enlaces de Soporte */}
             <div>
               <h3 className="font-semibold mb-4">Soporte</h3>
               <ul className="space-y-2 text-gray-400">
@@ -290,6 +338,8 @@ export default async function HomePage() {
                 </li>
               </ul>
             </div>
+
+            {/* Columna 4: Enlaces Legales */}
             <div>
               <h3 className="font-semibold mb-4">Legal</h3>
               <ul className="space-y-2 text-gray-400">
@@ -311,8 +361,10 @@ export default async function HomePage() {
               </ul>
             </div>
           </div>
+
+          {/* Copyright */}
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 Instituto Autónomo del Norte. Todos los derechos reservados.</p>
+            <p>&copy; 2025 Instituto Autónomo del Norte. Todos los derechos reservados.</p>
           </div>
         </div>
       </footer>

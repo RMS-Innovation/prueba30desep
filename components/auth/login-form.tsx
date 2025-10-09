@@ -1,5 +1,7 @@
 "use client"
 
+// Componente de formulario de inicio de sesión
+// Maneja la autenticación de usuarios y redirección según su rol
 import type React from "react"
 import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -13,22 +15,30 @@ import { useAuth } from "@/lib/auth-utils"
 import { Loader2, Eye, EyeOff } from "lucide-react"
 
 export function LoginForm() {
+  // Estado para controlar el montaje del componente (evita errores de hidratación)
   const [mounted, setMounted] = useState(false)
+
+  // Estados del formulario
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState("")
-  const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false) // Controla visibilidad de contraseña
+  const [error, setError] = useState("") // Mensajes de error
+  const [loading, setLoading] = useState(false) // Estado de carga durante autenticación
 
+  // Hooks de Next.js para navegación y autenticación
   const { login } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
+
+  // URL de redirección después del login (por defecto /dashboard)
   const redirectTo = searchParams?.get("redirect") || "/dashboard"
 
+  // Efecto para marcar el componente como montado
   useEffect(() => {
     setMounted(true)
   }, [])
 
+  // Maneja el envío del formulario de login
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
@@ -37,11 +47,13 @@ export function LoginForm() {
     console.log("[v0] Attempting login with:", { email, password: "***" })
 
     try {
+      // Llama a la función de login del hook de autenticación
       const result = await login(email, password)
       console.log("[v0] Login result:", result)
 
       if (result.success) {
         console.log("[v0] Login successful, redirecting to:", redirectTo)
+        // Redirige al dashboard correspondiente según el rol del usuario
         router.push(redirectTo)
       } else {
         console.log("[v0] Login failed:", result.error)
@@ -55,6 +67,7 @@ export function LoginForm() {
     }
   }
 
+  // Muestra skeleton loader mientras el componente se monta
   if (!mounted) {
     return (
       <Card className="w-full max-w-md mx-auto">
@@ -81,12 +94,14 @@ export function LoginForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Muestra mensaje de error si existe */}
           {error && (
             <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
 
+          {/* Campo de email */}
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -100,6 +115,7 @@ export function LoginForm() {
             />
           </div>
 
+          {/* Campo de contraseña con botón para mostrar/ocultar */}
           <div className="space-y-2">
             <Label htmlFor="password">Contraseña</Label>
             <div className="relative">
@@ -112,6 +128,7 @@ export function LoginForm() {
                 required
                 disabled={loading}
               />
+              {/* Botón para alternar visibilidad de contraseña */}
               <Button
                 type="button"
                 variant="ghost"
@@ -125,6 +142,7 @@ export function LoginForm() {
             </div>
           </div>
 
+          {/* Botón de envío con estado de carga */}
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? (
               <>
@@ -137,6 +155,7 @@ export function LoginForm() {
           </Button>
         </form>
 
+        {/* Enlace a página de registro */}
         <div className="mt-4 text-center text-sm">
           <span className="text-muted-foreground">¿No tienes cuenta? </span>
           <Link href="/auth/register" className="text-primary hover:underline">
