@@ -128,17 +128,7 @@ export function LoginForm() {
                 required
                 disabled={loading}
               />
-              {/* Botón para alternar visibilidad de contraseña */}
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                onClick={() => setShowPassword(!showPassword)}
-                disabled={loading}
-              >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </Button>
+             
             </div>
           </div>
 
