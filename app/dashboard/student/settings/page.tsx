@@ -209,15 +209,8 @@ export default function StudentSettings() {
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="promotions">Promociones y Ofertas</Label>
-                    <p className="text-sm text-gray-600">Descuentos y ofertas especiales</p>
-                  </div>
-                  <Switch
-                    id="promotions"
-                    checked={settings.notifications.promotions}
-                    onCheckedChange={(checked) => updateSetting("notifications", "promotions", checked)}
-                  />
+                  
+                  
                 </div>
               </CardContent>
             </Card>
