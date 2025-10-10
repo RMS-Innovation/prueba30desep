@@ -241,8 +241,6 @@ export default function StudentSettings() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="es">Español</SelectItem>
-                      <SelectItem value="en">English</SelectItem>
-                      <SelectItem value="pt">Português</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -258,9 +256,7 @@ export default function StudentSettings() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="america/mexico_city">Ciudad de México (GMT-6)</SelectItem>
-                      <SelectItem value="america/new_york">Nueva York (GMT-5)</SelectItem>
-                      <SelectItem value="america/los_angeles">Los Ángeles (GMT-8)</SelectItem>
-                      <SelectItem value="europe/madrid">Madrid (GMT+1)</SelectItem>
+                      
                     </SelectContent>
                   </Select>
                 </div>
@@ -423,12 +419,6 @@ export default function StudentSettings() {
                       </div>
                     </DialogContent>
                   </Dialog>
-                </div>
-
-                <div>
-                  <Button variant="outline" className="w-full bg-transparent">
-                    Descargar Mis Datos
-                  </Button>
                 </div>
               </CardContent>
             </Card>
