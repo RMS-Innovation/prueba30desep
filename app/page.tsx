@@ -1,16 +1,3 @@
-/**
- * Landing Page Principal
- *
- * Esta es la página de inicio de la plataforma educativa dental.
- * Muestra información general, características, beneficios y enlaces a las secciones principales.
- *
- * Funcionalidades:
- * - Redirección automática a dashboard según el rol del usuario autenticado
- * - Hero section con llamados a la acción
- * - Sección de características principales
- * - Testimonios y beneficios
- * - Footer con enlaces a todas las páginas importantes
- */
 
 import { getSession } from "@/lib/session"
 import { Button } from "@/components/ui/button"
@@ -114,14 +101,15 @@ export default async function HomePage() {
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-purple-200 text-purple-700 hover:bg-purple-50 text-lg px-8 py-3 bg-transparent"
-            >
-              <PlayCircle className="mr-2 w-5 h-5" />
-              Ver Demo
-            </Button>
+            <Link href="/courses">
+              <Button
+                size="lg"
+                className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-lg px-8 py-3"
+              >
+                Ver Cursos
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
