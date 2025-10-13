@@ -1,16 +1,20 @@
-import { getSession } from "@/lib/session"
-import { redirect } from "next/navigation"
-import { Sidebar } from "@/components/layout/sidebar"
-import { StatsCard } from "@/components/dashboard/stats-card"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { BookOpen, Users, Video, Award, Plus, Eye, Edit } from "lucide-react"
+// app/(dashboard)/instructor/page.tsx
+
+// Comentario: Cambiamos la importación para usar la misma que en la página del estudiante.
+import { getSimpleSession } from "@/lib/simple-auth";
+import { redirect } from "next/navigation";
+import { Sidebar } from "@/components/layout/sidebar";
+import { StatsCard } from "@/components/dashboard/stats-card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { BookOpen, Users, Video, Award, Plus, Eye, Edit } from "lucide-react";
 
 export default async function InstructorDashboard() {
-  const session = await getSession()
+  // Comentario: Cambiamos la llamada a la función para que sea consistente.
+  const session = await getSimpleSession();
 
   if (!session?.user || session.user.role !== "instructor") {
-    redirect("/auth/login")
+    redirect("/auth/login");
   }
 
   // Mock data - replace with real data from database
@@ -19,7 +23,7 @@ export default async function InstructorDashboard() {
     totalStudents: 142,
     totalVideos: 48,
     certificatesIssued: 89,
-  }
+  };
 
   const recentCourses = [
     {
@@ -46,7 +50,7 @@ export default async function InstructorDashboard() {
       status: "completed",
       lastUpdated: "2024-01-10",
     },
-  ]
+  ];
 
   const recentActivity = [
     {
@@ -57,13 +61,12 @@ export default async function InstructorDashboard() {
     { type: "completion", message: 'María García completó "Prostodoncia Digital"', time: "4 horas" },
     { type: "review", message: "5 tareas pendientes de revisión", time: "6 horas" },
     { type: "certificate", message: "Se emitieron 2 nuevos certificados", time: "1 día" },
-  ]
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Sidebar userRole="instructor" />
-
-      <div className="md:ml-64">
+      <div className="md:ml-64 pt-16"> {/* Añadido pt-16 para el header */}
         <div className="p-6">
           {/* Header */}
           <div className="flex justify-between items-center mb-8">
@@ -79,7 +82,8 @@ export default async function InstructorDashboard() {
             </Button>
           </div>
 
-          {/* Stats Cards */}
+          {/* ... (el resto del código de tu página de instructor no necesita cambios) ... */}
+           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <StatsCard
               title="Total Cursos"
@@ -188,5 +192,5 @@ export default async function InstructorDashboard() {
         </div>
       </div>
     </div>
-  )
+  );
 }
