@@ -17,10 +17,13 @@ export default async function DashboardPage() {
   switch (userRole) {
     case "student":
       redirect("/dashboard/student")
+      break;
     case "instructor":
       redirect("/dashboard/instructor")
+      break;
     case "admin":
       redirect("/dashboard/admin")
+      break;
     default:
       // Si no tiene rol definido, redirigir a estudiante por defecto
       redirect("/dashboard/student")
