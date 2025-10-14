@@ -1,184 +1,227 @@
-import { getSession } from "@/lib/session"
-import { redirect } from "next/navigation"
-import { Sidebar } from "@/components/layout/sidebar"
-import { StatsCard } from "@/components/dashboard/stats-card"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Users, BookOpen, CreditCard, TrendingUp, AlertCircle } from "lucide-react"
+import { StatsCard } from "@/components/admin/stats-card"
+import { RecentActivity } from "@/components/admin/recent-activity"
+import { RevenueChart } from "@/components/admin/revenue-chart"
+import { TopCourses } from "@/components/admin/top-courses"
+import { Users, GraduationCap, BookOpen, DollarSign, TrendingUp, Award } from "lucide-react"
+import { getSupabaseServerClient } from "@/lib/supabase/server"
 
-export default async function AdminDashboard() {
-  const session = await getSession()
+async function getDashboardStats() {
+  const supabase = await getSupabaseServerClient()
 
-  if (!session?.user || session.user.role !== "admin") {
-    redirect("/auth/login")
+  // Get total users count
+  const { count: totalUsers } = await supabase.from("users").select("*", { count: "exact", head: true })
+
+  // Get total students
+  const { count: totalStudents } = await supabase.from("students").select("*", { count: "exact", head: true })
+
+  // Get total instructors
+  const { count: totalInstructors } = await supabase.from("instructors").select("*", { count: "exact", head: true })
+
+  // Get total courses
+  const { count: totalCourses } = await supabase.from("courses").select("*", { count: "exact", head: true })
+
+  // Get published courses
+  const { count: publishedCourses } = await supabase
+    .from("courses")
+    .select("*", { count: "exact", head: true })
+    .eq("is_published", true)
+
+  // Get total enrollments
+  const { count: totalEnrollments } = await supabase.from("enrollments").select("*", { count: "exact", head: true })
+
+  // Get total revenue
+  const { data: payments } = await supabase.from("payments").select("amount").eq("status", "succeeded")
+
+  const totalRevenue = payments?.reduce((sum, p) => sum + Number(p.amount), 0) || 0
+
+  // Get certificates issued
+  const { count: certificatesIssued } = await supabase.from("certificates").select("*", { count: "exact", head: true })
+
+  return {
+    totalUsers: totalUsers || 0,
+    totalStudents: totalStudents || 0,
+    totalInstructors: totalInstructors || 0,
+    totalCourses: totalCourses || 0,
+    publishedCourses: publishedCourses || 0,
+    totalEnrollments: totalEnrollments || 0,
+    totalRevenue,
+    certificatesIssued: certificatesIssued || 0,
   }
+}
 
-  // Mock data - replace with real data from database
-  const stats = {
-    totalUsers: 1247,
-    totalCourses: 45,
-    monthlyRevenue: 24680,
-    platformUptime: 99.8,
-  }
-
-  const recentUsers = [
-    { name: "Dr. Ana García", email: "ana@email.com", role: "instructor", status: "pending", joinDate: "2024-01-15" },
-    { name: "Carlos Ruiz", email: "carlos@email.com", role: "student", status: "active", joinDate: "2024-01-14" },
-    { name: "María López", email: "maria@email.com", role: "student", status: "active", joinDate: "2024-01-13" },
+async function getRevenueData() {
+  // Mock data for revenue chart - replace with real data from database
+  return [
+    { month: "Jan", revenue: 12500 },
+    { month: "Feb", revenue: 15800 },
+    { month: "Mar", revenue: 18200 },
+    { month: "Apr", revenue: 22100 },
+    { month: "May", revenue: 25600 },
+    { month: "Jun", revenue: 28900 },
   ]
+}
 
-  const systemAlerts = [
-    { type: "warning", message: "3 nuevas aplicaciones de instructor pendientes", priority: "high" },
-    { type: "info", message: "Actualización de sistema programada para mañana", priority: "medium" },
-    { type: "success", message: "Backup completado exitosamente", priority: "low" },
-  ]
+async function getTopCourses() {
+  const supabase = await getSupabaseServerClient()
+
+  const { data: courses } = await supabase
+    .from("courses")
+    .select(`
+      id,
+      title,
+      total_enrollments,
+      total_revenue,
+      average_rating,
+      instructors (
+        users (
+          first_name,
+          last_name
+        )
+      )
+    `)
+    .eq("is_published", true)
+    .order("total_enrollments", { ascending: false })
+    .limit(5)
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Sidebar userRole="admin" />
+    courses?.map((course: any) => ({
+      id: course.id,
+      title: course.title,
+      instructor: `${course.instructors?.users?.first_name} ${course.instructors?.users?.last_name}`,
+      enrollments: course.total_enrollments || 0,
+      revenue: Number(course.total_revenue) || 0,
+      rating: Number(course.average_rating) || 0,
+    })) || []
+  )
+}
 
-      <div className="md:ml-64">
-        <div className="p-6">
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Panel de Administración</h1>
-            <p className="text-gray-600">Esta semana: 142 nuevas inscripciones, $12,480 en pagos procesados</p>
-          </div>
+async function getRecentActivity() {
+  // Mock data for recent activity - replace with real data from activity_log table
+  return [
+    {
+      id: "1",
+      user: {
+        name: "María García",
+        email: "maria@example.com",
+        avatar: "/placeholder.svg?height=40&width=40",
+      },
+      action: "enrolled in Advanced Endodontics",
+      timestamp: new Date(Date.now() - 1000 * 60 * 5),
+      type: "enrollment" as const,
+    },
+    {
+      id: "2",
+      user: {
+        name: "Dr. Carlos Ruiz",
+        email: "carlos@example.com",
+        avatar: "/placeholder.svg?height=40&width=40",
+      },
+      action: "published a new course",
+      timestamp: new Date(Date.now() - 1000 * 60 * 15),
+      type: "course" as const,
+    },
+    {
+      id: "3",
+      user: {
+        name: "Ana Martínez",
+        email: "ana@example.com",
+        avatar: "/placeholder.svg?height=40&width=40",
+      },
+      action: "completed payment of $49.99",
+      timestamp: new Date(Date.now() - 1000 * 60 * 30),
+      type: "payment" as const,
+    },
+    {
+      id: "4",
+      user: {
+        name: "Luis Fernández",
+        email: "luis@example.com",
+        avatar: "/placeholder.svg?height=40&width=40",
+      },
+      action: "earned a certificate",
+      timestamp: new Date(Date.now() - 1000 * 60 * 45),
+      type: "certificate" as const,
+    },
+  ]
+}
 
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <StatsCard
-              title="Total Usuarios"
-              value={stats.totalUsers.toLocaleString()}
-              icon={Users}
-              trend={{ value: 12, isPositive: true }}
-            />
-            <StatsCard
-              title="Total Cursos"
-              value={stats.totalCourses}
-              icon={BookOpen}
-              trend={{ value: 8, isPositive: true }}
-            />
-            <StatsCard
-              title="Ingresos Mensuales"
-              value={`$${stats.monthlyRevenue.toLocaleString()}`}
-              icon={CreditCard}
-              trend={{ value: 18, isPositive: true }}
-            />
-            <StatsCard
-              title="Uptime Plataforma"
-              value={`${stats.platformUptime}%`}
-              icon={TrendingUp}
-              trend={{ value: 0.2, isPositive: true }}
-            />
-          </div>
+export default async function AdminDashboardPage() {
+  const stats = await getDashboardStats()
+  const revenueData = await getRevenueData()
+  const topCourses = await getTopCourses()
+  const recentActivity = await getRecentActivity()
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Recent Users */}
-            <div className="lg:col-span-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <Users className="w-5 h-5 mr-2" />
-                      Usuarios Recientes
-                    </div>
-                    <Button variant="outline" size="sm">
-                      Ver Todos
-                    </Button>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {recentUsers.map((user, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                      >
-                        <div className="flex items-center space-x-4">
-                          <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                            <span className="text-purple-800 font-semibold">
-                              {user.name
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")}
-                            </span>
-                          </div>
-                          <div>
-                            <h3 className="font-semibold text-gray-900">{user.name}</h3>
-                            <p className="text-sm text-gray-600">{user.email}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-3">
-                          <span
-                            className={`px-2 py-1 text-xs rounded-full ${
-                              user.role === "instructor" ? "bg-blue-100 text-blue-800" : "bg-green-100 text-green-800"
-                            }`}
-                          >
-                            {user.role === "instructor" ? "Instructor" : "Estudiante"}
-                          </span>
-                          <span
-                            className={`px-2 py-1 text-xs rounded-full ${
-                              user.status === "active" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
-                            }`}
-                          >
-                            {user.status === "active" ? "Activo" : "Pendiente"}
-                          </span>
-                          <span className="text-sm text-gray-500">{user.joinDate}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* System Alerts */}
-            <div>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <AlertCircle className="w-5 h-5 mr-2" />
-                    Alertas del Sistema
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {systemAlerts.map((alert, index) => (
-                      <div key={index} className="flex items-start space-x-3">
-                        <div
-                          className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
-                            alert.type === "warning"
-                              ? "bg-yellow-500"
-                              : alert.type === "success"
-                                ? "bg-green-500"
-                                : "bg-blue-500"
-                          }`}
-                        />
-                        <div className="flex-1">
-                          <p className="text-sm text-gray-900">{alert.message}</p>
-                          <span
-                            className={`text-xs px-2 py-1 rounded-full mt-1 inline-block ${
-                              alert.priority === "high"
-                                ? "bg-red-100 text-red-800"
-                                : alert.priority === "medium"
-                                  ? "bg-yellow-100 text-yellow-800"
-                                  : "bg-gray-100 text-gray-800"
-                            }`}
-                          >
-                            {alert.priority === "high" ? "Alta" : alert.priority === "medium" ? "Media" : "Baja"}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <Button className="w-full mt-4 bg-purple-800 hover:bg-purple-900">Ver Todas las Alertas</Button>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </div>
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold">Dashboard</h1>
+        <p className="text-muted-foreground">Welcome back! Here's what's happening with your platform.</p>
       </div>
+
+      {/* Stats Grid */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <StatsCard
+          title="Total Users"
+          value={stats.totalUsers.toLocaleString()}
+          change="+12% from last month"
+          changeType="positive"
+          icon={Users}
+        />
+        <StatsCard
+          title="Active Students"
+          value={stats.totalStudents.toLocaleString()}
+          change="+8% from last month"
+          changeType="positive"
+          icon={GraduationCap}
+        />
+        <StatsCard
+          title="Total Courses"
+          value={stats.totalCourses}
+          description={`${stats.publishedCourses} published`}
+          icon={BookOpen}
+        />
+        <StatsCard
+          title="Total Revenue"
+          value={`$${stats.totalRevenue.toLocaleString()}`}
+          change="+23% from last month"
+          changeType="positive"
+          icon={DollarSign}
+        />
+      </div>
+
+      {/* Secondary Stats */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <StatsCard
+          title="Total Enrollments"
+          value={stats.totalEnrollments.toLocaleString()}
+          change="+15% from last month"
+          changeType="positive"
+          icon={TrendingUp}
+        />
+        <StatsCard
+          title="Certificates Issued"
+          value={stats.certificatesIssued.toLocaleString()}
+          change="+10% from last month"
+          changeType="positive"
+          icon={Award}
+        />
+        <StatsCard
+          title="Active Instructors"
+          value={stats.totalInstructors}
+          description="Verified and teaching"
+          icon={GraduationCap}
+        />
+      </div>
+
+      {/* Charts and Tables */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <RevenueChart data={revenueData} />
+        <RecentActivity activities={recentActivity} />
+      </div>
+
+      {/* Top Courses */}
+      <TopCourses courses={topCourses} />
     </div>
   )
 }
