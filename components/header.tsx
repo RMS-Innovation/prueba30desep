@@ -1,4 +1,4 @@
-// app/components/Header.tsx
+// app/components/header.tsx
 
 import Link from "next/link";
 import { GraduationCap } from "lucide-react";

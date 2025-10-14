@@ -21,7 +21,7 @@ export async function POST(req: Request) {
       licenseNumber,
     } = body
 
-    // Validación rápida
+    // Validación rápida de campos obligatorios
     if (!email || !password || !firstName || !lastName || !role) {
       return NextResponse.json(
         { success: false, error: "Faltan campos obligatorios" },
