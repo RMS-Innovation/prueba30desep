@@ -1,9 +1,12 @@
-import type React from "react"
+// app/layout.tsx
 
+import type React from "react"
 import type { Metadata } from "next"
 import { DM_Sans } from "next/font/google"
 import "./globals.css"
-import { Header } from "@/components/header";
+// Comentario: La ruta del archivo está en minúsculas, pero el componente importado está en mayúsculas.
+import { Header } from "@/components/header"; 
+import { AuthProvider } from "@/lib/auth-utils";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -27,7 +30,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" className={`${dmSans.variable} antialiased`}>
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        <AuthProvider>
+          <Header />
+          <main>{children}</main>
+        </AuthProvider>
+      </body>
     </html>
   )
 }
