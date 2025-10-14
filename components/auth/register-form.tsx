@@ -96,6 +96,7 @@ export function RegisterForm() {
       })
 
       if (result.success) {
+        console.log("Registro exitoso:", result)
         setSuccess(true)
         // Redirige al login después de 2 segundos
         setTimeout(() => {
