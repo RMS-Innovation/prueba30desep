@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
-//comentario de prueba3
+//comentario de prueba4
 // Cliente Supabase con Service Role Key para poder crear usuarios y escribir en tablas protegidas
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
