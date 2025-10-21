@@ -116,11 +116,7 @@ export function AdminLoginForm() {
                 disabled={isLoading}
                 tabIndex={-1}
               >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4 text-gray-500" />
-                ) : (
-                  <Eye className="h-4 w-4 text-gray-500" />
-                )}
+                
               </Button>
             </div>
           </div>
@@ -146,13 +142,6 @@ export function AdminLoginForm() {
           </Button>
 
           <div className="flex items-center justify-between w-full text-sm">
-            <Link href="/login/student" className="text-gray-600 hover:text-red-600 transition-colors">
-              Portal Estudiantes
-            </Link>
-            <span className="text-gray-400">•</span>
-            <Link href="/login/instructor" className="text-gray-600 hover:text-red-600 transition-colors">
-              Portal Instructores
-            </Link>
           </div>
         </CardFooter>
       </form>
