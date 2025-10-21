@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
@@ -10,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Eye, EyeOff, Loader2, Shield } from "lucide-react"
+import { Eye, EyeOff, Loader2, Shield, ArrowRight } from "lucide-react"
 
 export function AdminLoginForm() {
   const [mounted, setMounted] = useState(false)
@@ -59,26 +58,28 @@ export function AdminLoginForm() {
   }
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader className="space-y-1">
-        <div className="flex items-center justify-center mb-4">
-          <div className="p-3 bg-red-100 rounded-full">
-            <Shield className="h-8 w-8 text-red-600" />
+    <Card className="w-full border-gray-200 shadow-lg">
+      <CardHeader className="space-y-1 pb-6">
+        <div className="flex items-center justify-center lg:justify-start mb-2">
+          <div className="p-2 bg-red-50 rounded-lg">
+            <Shield className="h-6 w-6 text-red-600" />
           </div>
         </div>
-        <CardTitle className="text-2xl text-center">Administrador</CardTitle>
-        <CardDescription className="text-center">Acceso restringido para administradores</CardDescription>
+        <CardTitle className="text-2xl font-bold text-gray-900">Iniciar Sesión</CardTitle>
+        <CardDescription className="text-gray-600">Ingresa tus credenciales de administrador</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           {error && (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
+            <Alert variant="destructive" className="bg-red-50 border-red-200">
+              <AlertDescription className="text-red-800">{error}</AlertDescription>
             </Alert>
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="email">Correo electrónico</Label>
+            <Label htmlFor="email" className="text-gray-700 font-medium">
+              Correo electrónico
+            </Label>
             <Input
               id="email"
               type="email"
@@ -87,11 +88,14 @@ export function AdminLoginForm() {
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={isLoading}
+              className="h-11 border-gray-300 focus:border-red-500 focus:ring-red-500"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Contraseña</Label>
+            <Label htmlFor="password" className="text-gray-700 font-medium">
+              Contraseña
+            </Label>
             <div className="relative">
               <Input
                 id="password"
@@ -101,36 +105,53 @@ export function AdminLoginForm() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={isLoading}
+                className="h-11 border-gray-300 focus:border-red-500 focus:ring-red-500 pr-10"
               />
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                 onClick={() => setShowPassword(!showPassword)}
                 disabled={isLoading}
+                tabIndex={-1}
               >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4 text-gray-500" />
+                ) : (
+                  <Eye className="h-4 w-4 text-gray-500" />
+                )}
               </Button>
             </div>
           </div>
         </CardContent>
 
-        <CardFooter className="flex flex-col space-y-4">
-          <Button type="submit" className="w-full bg-red-600 hover:bg-red-700" disabled={isLoading}>
+        <CardFooter className="flex flex-col space-y-4 pt-2">
+          <Button
+            type="submit"
+            className="w-full h-11 bg-red-600 hover:bg-red-700 text-white font-medium"
+            disabled={isLoading}
+          >
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Verificando acceso...
               </>
             ) : (
-              "Acceder al Panel"
+              <>
+                Acceder al Panel
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </>
             )}
           </Button>
 
-          <div className="text-center text-sm text-gray-600">
-            <Link href="/auth/login" className="text-red-600 hover:underline">
-              ¿Eres estudiante? Inicia sesión aquí
+          <div className="flex items-center justify-between w-full text-sm">
+            <Link href="/login/student" className="text-gray-600 hover:text-red-600 transition-colors">
+              Portal Estudiantes
+            </Link>
+            <span className="text-gray-400">•</span>
+            <Link href="/login/instructor" className="text-gray-600 hover:text-red-600 transition-colors">
+              Portal Instructores
             </Link>
           </div>
         </CardFooter>
