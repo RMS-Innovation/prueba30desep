@@ -2,7 +2,6 @@
 import { headers, cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import Link from "next/link"
-
 import { getSimpleSession } from "@/lib/simple-auth"
 import { Sidebar } from "@/components/layout/sidebar"
 import { StatsCard } from "@/components/dashboard/stats-card"
