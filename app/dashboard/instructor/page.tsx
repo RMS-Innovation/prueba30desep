@@ -1,189 +1,126 @@
 // app/(dashboard)/instructor/page.tsx
 
-// Comentario: Cambiamos la importación para usar la misma que en la página del estudiante.
 import { getSimpleSession } from "@/lib/simple-auth";
 import { redirect } from "next/navigation";
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
 import { Sidebar } from "@/components/layout/sidebar";
 import { StatsCard } from "@/components/dashboard/stats-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Users, Video, Award, Plus, Eye, Edit } from "lucide-react";
+import Link from "next/link"; // Asegúrate de importar Link
 
 export default async function InstructorDashboard() {
-  // Comentario: Cambiamos la llamada a la función para que sea consistente.
-  const session = await getSimpleSession();
+  const { user: sessionUser, isLoggedIn } = await getSimpleSession();
 
-  if (!session?.user || session.user.role !== "instructor") {
+  if (!isLoggedIn || !sessionUser) {
     redirect("/auth/login");
   }
 
-  // Mock data - replace with real data from database
+  if (sessionUser.role !== "instructor") {
+    redirect("/dashboard/student"); // Si no es instructor, lo mandamos a student
+  }
+
+  // --- INICIO DE LA OBTENCIÓN DE DATOS REALES ---
+  const supabase = createServerComponentClient({ cookies });
+
+  // 1. Obtener el perfil del instructor para las estadísticas
+  const { data: instructorProfile } = await supabase
+    .from('instructors')
+    .select('id, total_courses_created, total_students_taught, total_reviews, total_earnings')
+    .eq('user_id', sessionUser.id)
+    .single();
+
+  // 2. Obtener los cursos recientes del instructor
+  const { data: recentCoursesData } = await supabase
+    .from('courses')
+    .select('id, title, total_enrollments, is_published, last_updated_content')
+    .eq('instructor_id', instructorProfile?.id) // Usamos el ID del perfil de instructor
+    .order('created_at', { ascending: false })
+    .limit(3);
+
+  // --- FIN DE LA OBTENCIÓN DE DATOS REALES ---
+
+  // Usamos los datos reales en lugar de los datos de prueba (mock)
   const stats = {
-    totalCourses: 6,
-    totalStudents: 142,
-    totalVideos: 48,
-    certificatesIssued: 89,
+    totalCourses: instructorProfile?.total_courses_created ?? 0,
+    totalStudents: instructorProfile?.total_students_taught ?? 0,
+    totalReviews: instructorProfile?.total_reviews ?? 0,
+    totalEarnings: instructorProfile?.total_earnings ?? 0,
   };
 
-  const recentCourses = [
-    {
-      id: 1,
-      title: "Anatomía Dental Avanzada",
-      students: 28,
-      completion: 85,
-      status: "active",
-      lastUpdated: "2024-01-15",
-    },
-    {
-      id: 2,
-      title: "Técnicas de Endodoncia",
-      students: 35,
-      completion: 72,
-      status: "active",
-      lastUpdated: "2024-01-12",
-    },
-    {
-      id: 3,
-      title: "Prostodoncia Digital",
-      students: 22,
-      completion: 95,
-      status: "completed",
-      lastUpdated: "2024-01-10",
-    },
-  ];
-
-  const recentActivity = [
-    {
-      type: "enrollment",
-      message: '3 nuevos estudiantes se inscribieron en "Anatomía Dental Avanzada"',
-      time: "2 horas",
-    },
-    { type: "completion", message: 'María García completó "Prostodoncia Digital"', time: "4 horas" },
-    { type: "review", message: "5 tareas pendientes de revisión", time: "6 horas" },
-    { type: "certificate", message: "Se emitieron 2 nuevos certificados", time: "1 día" },
-  ];
+  const recentCourses = recentCoursesData || [];
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Sidebar userRole="instructor" />
-      <div className="md:ml-64 pt-16"> {/* Añadido pt-16 para el header */}
+      <div className="md:ml-64 pt-16">
         <div className="p-6">
           {/* Header */}
           <div className="flex justify-between items-center mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Buenos días, Dr. {session.user.name}</h1>
-              <p className="text-gray-600">
-                28 estudiantes están actualmente inscritos en tu curso "Anatomía Dental Avanzada"
-              </p>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Buenos días, Dr. {sessionUser.name}</h1>
+              <p className="text-gray-600">Aquí tienes un resumen de tu actividad.</p>
             </div>
-            <Button className="bg-purple-800 hover:bg-purple-900">
-              <Plus className="w-4 h-4 mr-2" />
-              Crear Curso
-            </Button>
+            <Link href="/instructor/courses/new">
+              <Button className="bg-purple-800 hover:bg-purple-900">
+                <Plus className="w-4 h-4 mr-2" />
+                Crear Curso
+              </Button>
+            </Link>
           </div>
 
-          {/* ... (el resto del código de tu página de instructor no necesita cambios) ... */}
-           {/* Stats Cards */}
+          {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <StatsCard
-              title="Total Cursos"
-              value={stats.totalCourses}
-              icon={BookOpen}
-              trend={{ value: 20, isPositive: true }}
-            />
-            <StatsCard
-              title="Total Estudiantes"
-              value={stats.totalStudents}
-              icon={Users}
-              trend={{ value: 15, isPositive: true }}
-            />
-            <StatsCard
-              title="Videos Subidos"
-              value={stats.totalVideos}
-              icon={Video}
-              trend={{ value: 25, isPositive: true }}
-            />
-            <StatsCard
-              title="Certificados Emitidos"
-              value={stats.certificatesIssued}
-              icon={Award}
-              trend={{ value: 30, isPositive: true }}
-            />
+            <StatsCard title="Total Cursos" value={stats.totalCourses} icon={BookOpen} />
+            <StatsCard title="Total Estudiantes" value={stats.totalStudents} icon={Users} />
+            <StatsCard title="Total Reseñas" value={stats.totalReviews} icon={Award} />
+            <StatsCard title="Ganancias Totales" value={`$${stats.totalEarnings.toFixed(2)}`} icon={Video} />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* My Courses */}
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-3">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
                     <div className="flex items-center">
                       <BookOpen className="w-5 h-5 mr-2" />
-                      Mis Cursos
+                      Mis Cursos Recientes
                     </div>
-                    <Button variant="outline" size="sm">
-                      Ver Todos
-                    </Button>
+                    <Link href="/instructor/courses">
+                      <Button variant="outline" size="sm">Ver Todos</Button>
+                    </Link>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {recentCourses.map((course) => (
-                      <div
-                        key={course.id}
-                        className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                      >
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3">
+                    {recentCourses.length === 0 ? (
+                      <p className="text-sm text-gray-500">Aún no has creado ningún curso.</p>
+                    ) : (
+                      recentCourses.map((course) => (
+                        <div key={course.id} className="flex items-center justify-between p-4 border rounded-lg">
+                          <div className="flex-1">
                             <h3 className="font-semibold text-gray-900">{course.title}</h3>
-                            <span
-                              className={`px-2 py-1 text-xs rounded-full ${
-                                course.status === "active" ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800"
-                              }`}
-                            >
-                              {course.status === "active" ? "Activo" : "Completado"}
-                            </span>
+                            <div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
+                              <span>{course.total_enrollments} estudiantes</span>
+                              <span className={`px-2 py-1 text-xs rounded-full ${course.is_published ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>
+                                {course.is_published ? "Publicado" : "Borrador"}
+                              </span>
+                            </div>
                           </div>
-                          <div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
-                            <span>{course.students} estudiantes</span>
-                            <span>{course.completion}% completado</span>
-                            <span>Actualizado {course.lastUpdated}</span>
+                          <div className="flex space-x-2">
+                            <Link href={`/courses/${course.id}`}>
+                              <Button variant="outline" size="sm"><Eye className="w-4 h-4 mr-1" /> Ver</Button>
+                            </Link>
+                            <Link href={`/instructor/courses/${course.id}`}>
+                               <Button variant="outline" size="sm"><Edit className="w-4 h-4 mr-1" /> Editar</Button>
+                            </Link>
                           </div>
                         </div>
-                        <div className="flex space-x-2">
-                          <Button variant="outline" size="sm">
-                            <Eye className="w-4 h-4 mr-1" />
-                            Ver
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            <Edit className="w-4 h-4 mr-1" />
-                            Editar
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Recent Activity */}
-            <div>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Actividad Reciente</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {recentActivity.map((activity, index) => (
-                      <div key={index} className="flex items-start space-x-3">
-                        <div className="w-2 h-2 bg-purple-600 rounded-full mt-2 flex-shrink-0" />
-                        <div className="flex-1">
-                          <p className="text-sm text-gray-900">{activity.message}</p>
-                          <p className="text-xs text-gray-500">Hace {activity.time}</p>
-                        </div>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
                 </CardContent>
               </Card>
