@@ -4,7 +4,7 @@
 
 import type React from "react";
 import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,12 +15,12 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter, // Asegúrate de importar CardFooter si no estaba
+  CardFooter,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/lib/auth-utils";
 import { Loader2, Eye, EyeOff } from "lucide-react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"; // Necesario para getUser y consultar DB
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 export function LoginForm() {
   const [mounted, setMounted] = useState(false);
@@ -32,7 +32,7 @@ export function LoginForm() {
 
   const { login } = useAuth();
   const router = useRouter();
-  const supabase = createClientComponentClient(); // Cliente Supabase para el navegador
+  const supabase = createClientComponentClient();
 
   useEffect(() => {
     setMounted(true);
@@ -46,68 +46,65 @@ export function LoginForm() {
     console.log("[v0] Attempting login with:", { email, password: "***" });
 
     try {
-      // 1. Llama a la función de login del hook (que usa Supabase)
       const result = await login(email, password);
       console.log("[v0] Login result:", result);
 
+      // Primero, verifica si el login fue exitoso
       if (result.success) {
-        console.log("[v0] Login successful, fetching user role...");
+        // LUEGO, verifica si el objeto 'user' existe en el resultado
+        if (result.user) {
+          const user = result.user; // Ahora TypeScript sabe que 'user' existe
+          console.log("[v0] Login successful, user data from login:", user);
 
-        // 2. Si el login fue exitoso, obtén los datos del usuario actual de forma segura
-        const {
-          data: { user },
-          error: userError,
-        } = await supabase.auth.getUser();
+          // Obtén el rol (prioriza metadatos, luego tabla 'users')
+          let userRole = user.user_metadata?.role;
+          console.log("[v0] Role from metadata:", userRole);
 
-        if (userError || !user) {
-          console.error(
-            "[v0] Error fetching user after login:",
-            userError?.message
-          );
-          setError(
-            "No se pudo obtener la información del usuario después del login."
-          );
-          setLoading(false);
-          return; // Detiene la ejecución
-        }
+          if (!userRole) {
+            console.log("[v0] Role not in metadata, querying public.users...");
+            const { data: publicUserData, error: publicUserError } =
+              await supabase
+                .from("users")
+                .select("role")
+                .eq("id", user.id)
+                .maybeSingle(); // Usamos maybeSingle
 
-        // 3. Obtén el rol (prioriza metadatos, luego tabla 'users')
-        let userRole = user.user_metadata?.role;
-        console.log("[v0] Role from metadata:", userRole);
-
-        if (!userRole) {
-          console.log("[v0] Role not in metadata, querying public.users...");
-          const { data: publicUserData, error: publicUserError } =
-            await supabase
-              .from("users")
-              .select("role")
-              .eq("id", user.id)
-              .single();
-
-          if (publicUserError) {
-            console.warn(
-              "[v0] Could not fetch role from public.users:",
-              publicUserError.message
-            );
-            userRole = "student"; // Rol por defecto si falla la consulta
-          } else {
-            userRole = publicUserData?.role || "student"; // Rol por defecto si no hay rol en DB
+            if (publicUserError) {
+              console.warn(
+                "[v0] Could not fetch role from public.users:",
+                publicUserError.message
+              );
+              if (publicUserError.message.includes("multiple rows")) {
+                setError(
+                  "Error: Múltiples perfiles encontrados. Contacta soporte."
+                );
+                setLoading(false);
+                return;
+              }
+              userRole = "student"; // Rol por defecto si falla o no hay rol
+            } else {
+              userRole = publicUserData?.role || "student";
+            }
+            console.log("[v0] Role from public.users (or default):", userRole);
           }
-          console.log("[v0] Role from public.users (or default):", userRole);
-        }
 
-        // 4. Determina la URL de redirección
-        let targetDashboard = "/dashboard/student"; // Ruta por defecto
-        if (userRole === "instructor") {
-          targetDashboard = "/dashboard/instructor";
-        } else if (userRole === "admin") {
-          targetDashboard = "/dashboard/admin";
-        }
+          // Determina la URL de redirección
+          let targetDashboard = "/dashboard/student";
+          if (userRole === "instructor") {
+            targetDashboard = "/dashboard/instructor";
+          } else if (userRole === "admin") {
+            targetDashboard = "/dashboard/admin";
+          }
 
-        console.log("[v0] Redirecting to:", targetDashboard);
-        // 5. Redirige al dashboard correspondiente
-        router.push(targetDashboard);
-        // router.refresh(); // Descomenta si es necesario
+          console.log("[v0] Redirecting to:", targetDashboard);
+          // Redirige
+          router.push(targetDashboard);
+
+        } else {
+          // Caso improbable donde success es true pero no hay user
+          console.error("[v0] Login successful but no user data returned!");
+          setError("Error inesperado al obtener datos del usuario.");
+        }
       } else {
         // Si el login falló
         console.log("[v0] Login failed:", result.error);
@@ -183,7 +180,6 @@ export function LoginForm() {
                 required
                 disabled={loading}
               />
-              {/* Botón para mostrar/ocultar contraseña */}
               <Button
                  type="button"
                  variant="ghost"
