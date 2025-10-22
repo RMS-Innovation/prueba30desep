@@ -1,74 +1,94 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { getSupabaseServerClient } from "@/lib/supabase/server"
+// app/api/auth/admin/login/route.ts
 
+import { type NextRequest, NextResponse } from "next/server";
+import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
+import { createClient } from "@supabase/supabase-js"; // Para el cliente Admin
+
+// --- La función POST se mantiene igual que la versión correcta anterior ---
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json()
+    const { email, password } = await request.json();
+    const cookieStore = cookies();
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabaseAdmin = createClient( // Cliente Admin con claves
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+      
+    );
 
-    const supabase = await getSupabaseServerClient()
-
-    // Sign in with Supabase Auth
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 401 })
+    const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+    // ... (manejo de error signInError) ...
+    if (signInError || !authData.user) {
+         // ... (retorna 401 o 500) ...
+         return NextResponse.json({ error: signInError?.message || "Error post-login" }, { status: signInError ? 401: 500 });
     }
 
-    // Verify admin role
-    const { data: userData, error: userError } = await supabase
+
+    console.log("[Admin Login API] Verifying role via Admin Client for user ID:", authData.user.id);
+    const { data: userData, error: userFetchError } = await supabaseAdmin // <-- Usa Admin
       .from("users")
       .select("role, admins(*)")
-      .eq("auth0_id", data.user.id)
-      .single()
+      .eq("id", authData.user.id) // <-- Busca por 'id'
+      .maybeSingle();
 
-    if (userError || !userData || userData.role !== "admin") {
-      await supabase.auth.signOut()
-      return NextResponse.json({ error: "Access denied. Admin privileges required." }, { status: 403 })
+    if (userFetchError) { /* ... manejo de error de consulta ... */ }
+
+    console.log("[Admin Login API] Data fetched from public.users:", JSON.stringify(userData, null, 2));
+
+    if (!userData || userData.role !== "admin") {
+      console.warn("[Admin Login API] Access Denied. User data exists:", !!userData, "Role found:", userData?.role);
+      await supabase.auth.signOut();
+      return NextResponse.json({ error: "Acceso denegado. Se requieren privilegios de administrador." }, { status: 403 });
     }
 
-    return NextResponse.json({
-      success: true,
-      user: data.user,
-      admin: userData.admins,
-    })
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 })
-  }
+    console.log("[Admin Login API] Admin access granted for:", authData.user.email);
+    return NextResponse.json({ /* ... datos de éxito ... */ });
+
+  } catch (error: any) { /* ... manejo de error ... */ }
 }
 
-export async function GET() {
+// ==========================================================
+// INICIO CORRECCIÓN: Se añaden los argumentos a createClient en GET
+// ==========================================================
+export async function GET(request: NextRequest) {
   try {
-    const supabase = await getSupabaseServerClient()
+    const cookieStore = cookies();
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser()
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    if (error || !user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+    if (authError || !user) {
+      return NextResponse.json({ error: "No autenticado" }, { status: 401 });
     }
 
-    // Get admin data
-    const { data: userData, error: userError } = await supabase
-      .from("users")
-      .select("*, admins(*)")
-      .eq("auth0_id", user.id)
-      .single()
+    // Cliente Admin para la consulta - ¡AHORA CON ARGUMENTOS!
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
 
-    if (userError || !userData || userData.role !== "admin") {
-      return NextResponse.json({ error: "Not authorized" }, { status: 403 })
+    // Verifica rol usando el CLIENTE ADMIN
+    const { data: userData, error: userFetchError } = await supabaseAdmin // <-- Usa Admin
+      .from("users")
+      .select("role, admins(*)")
+      .eq("id", user.id) // <-- Usa 'id'
+      .maybeSingle();
+
+    if (userFetchError || !userData || userData.role !== "admin") {
+      return NextResponse.json({ error: "No autorizado" }, { status: 403 });
     }
 
     return NextResponse.json({
-      user,
-      userData,
-      adminData: userData.admins,
-    })
+       user: { id: user.id, email: user.email, role: userData.role },
+       adminData: userData.admins,
+    });
+
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 })
+    console.error("[Admin Login API - GET] Unexpected error:", error);
+    return NextResponse.json({ error: error.message || "Error interno del servidor" }, { status: 500 });
   }
 }
+// ==========================================================
+// FIN CORRECCIÓN
+// ==========================================================

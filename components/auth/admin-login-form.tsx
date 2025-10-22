@@ -1,61 +1,104 @@
-"use client"
+// components/auth/admin-login-form.tsx
 
-import type React from "react"
-import { useState, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Eye, EyeOff, Loader2, Shield, ArrowRight } from "lucide-react"
+"use client";
+
+import type React from "react";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Eye, EyeOff, Loader2, Shield, ArrowRight } from "lucide-react";
+import { useAuth } from "@/lib/auth-utils"; // Importa el hook
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"; // Importa el cliente
 
 export function AdminLoginForm() {
-  const [mounted, setMounted] = useState(false)
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState("")
+  const [mounted, setMounted] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const router = useRouter()
-  const searchParams = useSearchParams()
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { login } = useAuth(); // Obtén login de useAuth
+  const supabase = createClientComponentClient(); // Cliente para consulta de rol
 
   useEffect(() => {
-    setMounted(true)
-  }, [])
+    setMounted(true);
+  }, []);
 
   if (!mounted) {
-    return <div className="w-full max-w-md mx-auto p-6">Cargando...</div>
+    return <div className="w-full max-w-md mx-auto p-6">Cargando...</div>;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError("")
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
 
     try {
-      const response = await fetch("/api/auth/admin/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      })
+      // Llama a la función login del hook
+      const result = await login(email, password);
+      console.log("[AdminLoginForm] Login result from useAuth:", result);
 
-      const data = await response.json()
+      if (result.success && result.user) {
+        const user = result.user;
+        console.log("[AdminLoginForm] Login successful, user ID:", user.id);
 
-      if (data.success) {
-        const redirectTo = searchParams.get("redirect") || "/dashboard/admin"
-        router.push(redirectTo)
+        // Verifica el rol
+        let userRole = user.user_metadata?.role;
+        console.log("[AdminLoginForm] Role from metadata:", userRole);
+
+        if (!userRole) {
+          console.log("[AdminLoginForm] Role not in metadata, querying public.users...");
+          const { data: publicUserData, error: publicUserError } =
+            await supabase
+              .from("users")
+              .select("role")
+              .eq("id", user.id)
+              .maybeSingle();
+
+          if (publicUserError) {
+            console.warn("[AdminLoginForm] Could not fetch role:", publicUserError.message);
+            userRole = 'student'; // Default
+          } else {
+            userRole = publicUserData?.role || 'student';
+          }
+        }
+        console.log("[AdminLoginForm] Final role determined:", userRole);
+
+        // Comprueba si es admin ANTES de redirigir
+        if (userRole === "admin") {
+          const redirectTo = searchParams.get("redirect") || "/dashboard/admin";
+          console.log("[AdminLoginForm] Admin access confirmed. Redirecting to:", redirectTo);
+          router.push(redirectTo);
+        } else {
+          console.warn("[AdminLoginForm] Access denied. User is not an admin. Role:", userRole);
+          setError("Acceso denegado. No tienes privilegios de administrador.");
+        }
       } else {
-        setError(data.error || "Error al iniciar sesión")
+        console.log("[AdminLoginForm] Login failed:", result.error);
+        setError(result.error || "Credenciales inválidas.");
       }
-    } catch (error) {
-      setError("Error de conexión. Intenta nuevamente.")
+    } catch (error: any) {
+      console.error("[AdminLoginForm] Submit error:", error);
+      setError("Error de conexión. Intenta nuevamente.");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <Card className="w-full border-gray-200 shadow-lg">
@@ -102,7 +145,13 @@ export function AdminLoginForm() {
                 type={showPassword ? "text" : "password"}
                 placeholder="••••••••"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                // ==================================================
+                // INICIO CORRECCIÓN (Línea 161)
+                // ==================================================
+                onChange={(e) => setPassword(e.target.value)} // Corregido de e.g.value a e.target.value
+                // ==================================================
+                // FIN CORRECCIÓN
+                // ==================================================
                 required
                 disabled={isLoading}
                 className="h-11 border-gray-300 focus:border-red-500 focus:ring-red-500 pr-10"
@@ -116,7 +165,7 @@ export function AdminLoginForm() {
                 disabled={isLoading}
                 tabIndex={-1}
               >
-                
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </Button>
             </div>
           </div>
@@ -142,9 +191,10 @@ export function AdminLoginForm() {
           </Button>
 
           <div className="flex items-center justify-between w-full text-sm">
+            {/* ... (enlaces si los necesitas) ... */}
           </div>
         </CardFooter>
       </form>
     </Card>
-  )
+  );
 }

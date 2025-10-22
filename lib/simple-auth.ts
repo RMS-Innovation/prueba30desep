@@ -5,76 +5,95 @@ import { cookies } from "next/headers";
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 // Define la estructura del usuario que tu aplicación espera
-// Asegúrate de que coincida con los datos que realmente necesitas
 export interface User {
   id: string;
-  email?: string; // El email puede ser opcional dependiendo de tu configuración
-  role?: string; // El rol viene de 'user_metadata' o tu tabla 'users'
-  firstName?: string; // Viene de 'user_metadata' o tu tabla 'users'
-  lastName?: string; // Viene de 'user_metadata' o tu tabla 'users'
-  name?: string; // Podemos construirlo a partir de firstName y lastName
+  email?: string;
+  role?: string;
+  firstName?: string;
+  lastName?: string;
+  name?: string;
   isLoggedIn: boolean;
-  // Añade otros campos si los necesitas directamente en la sesión
 }
 
-// La NUEVA función getSimpleSession usando Supabase Helpers
+// ==========================================================
+// VERSIÓN FINAL Y SEGURA de getSimpleSession
+// ==========================================================
 export async function getSimpleSession(): Promise<{ user: User | null; isLoggedIn: boolean }> {
   const cookieStore = cookies();
-  // Crea un cliente Supabase específico para Componentes de Servidor
   const supabase = createServerComponentClient({ cookies: () => cookieStore });
 
   try {
-    // Intenta obtener la sesión activa de Supabase
-    const { data: { session }, error } = await supabase.auth.getSession();
+    // 1. Usa getUser() para verificar la sesión contra el servidor Supabase
+    const { data: { user: authUser }, error: userError } = await supabase.auth.getUser();
 
-    if (error) {
-      console.error("Error fetching Supabase session:", error.message);
+    if (userError) {
+      console.error("[simple-auth] Error fetching Supabase user:", userError.message);
       return { user: null, isLoggedIn: false };
     }
 
-    if (session) {
-      // Si hay sesión, construimos el objeto User que tu app espera
-      const userMetadata = session.user.user_metadata;
-      const userRole = userMetadata?.role || 'student'; // Obtiene el rol, default 'student'
+    if (authUser) {
+      // 2. Intenta obtener datos desde user_metadata
+      let userRole = authUser.user_metadata?.role;
+      let firstName = authUser.user_metadata?.firstName;
+      let lastName = authUser.user_metadata?.lastName;
+      console.log("[simple-auth] Role from metadata:", userRole); // Log para depurar
 
-      // Intenta obtener datos adicionales de tu tabla 'public.users' si es necesario
-      // Esto es opcional, dependiendo de si necesitas datos que no estén en user_metadata
-      /*
-      const { data: publicUserData, error: publicUserError } = await supabase
-        .from('users')
-        .select('first_name, last_name, profile_image_url') // Selecciona los campos que necesites
-        .eq('id', session.user.id)
-        .single();
+      // 3. Fallback: Si FALTA ALGUNO (rol, nombre, apellido), consulta public.users
+      if (!userRole || !firstName || !lastName) {
+        console.log("[simple-auth] Data missing in metadata, querying public.users for ID:", authUser.id);
+        const { data: publicUserData, error: publicUserError } = await supabase
+          .from('users') // Tu tabla pública de usuarios
+          .select('role, first_name, last_name') // Selecciona rol y nombres
+          .eq('id', authUser.id) // Busca por el ID de auth.users (UUID)
+          .maybeSingle(); // Usa maybeSingle por si acaso
 
-      if (publicUserError) {
-         console.warn("Could not fetch public user data:", publicUserError.message);
+        if (publicUserError) {
+           console.warn("[simple-auth] Could not fetch details from public.users:", publicUserError.message);
+           // Si la consulta falla Y NO teníamos rol de metadata, usa 'student' como último recurso
+           if (!userRole) userRole = 'student';
+        } else if (publicUserData) {
+          // Si encontró datos en public.users:
+          // - Usa el rol de public.users SOLO SI no venía en metadata.
+          if (!userRole) userRole = publicUserData.role || 'student';
+          // - Usa nombre/apellido de public.users SOLO SI no venían en metadata.
+          if (!firstName) firstName = publicUserData.first_name;
+          if (!lastName) lastName = publicUserData.last_name;
+          console.log("[simple-auth] Data obtained/merged from public.users. Final role:", userRole); // Log
+        } else {
+           // Si no encontró el usuario en public.users (debería existir!)
+           console.warn("[simple-auth] User ID not found in public.users:", authUser.id);
+           if (!userRole) userRole = 'student'; // Rol por defecto si falta en todos lados
+        }
       }
-      */
 
-      const firstName = userMetadata?.firstName // || publicUserData?.first_name;
-      const lastName = userMetadata?.lastName // || publicUserData?.last_name;
+      // 4. Valores por defecto finales si algo falló
+      if (!userRole) userRole = 'student';
+      if (!firstName) firstName = 'Usuario';
+      if (!lastName) lastName = '';
 
+      // 5. Construye el objeto User final
       const userObject: User = {
-        id: session.user.id,
-        email: session.user.email,
+        id: authUser.id,
+        email: authUser.email,
         role: userRole,
         firstName: firstName,
         lastName: lastName,
-        name: firstName && lastName ? `${firstName} ${lastName}` : session.user.email, // Nombre completo o email
+        name: `${firstName} ${lastName}`.trim() || authUser.email, // Nombre o email
         isLoggedIn: true,
       };
+      console.log("[simple-auth] Returning session with final role:", userRole, "for user:", userObject.id); // Log final
       return { user: userObject, isLoggedIn: true };
     }
 
-    // Si no hay sesión
+    // Si getUser() no devuelve usuario
+    console.log("[simple-auth] No authenticated user found by getUser().");
     return { user: null, isLoggedIn: false };
 
   } catch (error) {
-    console.error("Unexpected error in getSimpleSession:", error);
+    console.error("[simple-auth] Unexpected error:", error);
     return { user: null, isLoggedIn: false };
   }
 }
 
-// Las funciones createSimpleSession, destroySimpleSession, setSimpleSession ya NO son necesarias.
-// Supabase Auth Helpers manejan la creación y destrucción de cookies automáticamente.
-// Puedes eliminar esas funciones de este archivo.
+// Las funciones antiguas createSimpleSession, destroySimpleSession, setSimpleSession
+// ya NO son necesarias y deben eliminarse si aún existen.
