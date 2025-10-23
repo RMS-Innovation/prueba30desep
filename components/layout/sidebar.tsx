@@ -1,132 +1,137 @@
 "use client"
 
-// Componente de barra lateral de navegación
-// Muestra diferentes menús según el rol del usuario (estudiante, instructor, admin)
+import { useState } from "react"
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
 import {
-  LayoutDashboard,
   BookOpen,
-  GraduationCap,
-  CheckCircle2,
-  BarChart2,
+  Video,
+  Award,
+  CreditCard,
   Users,
-  Library,
   Settings,
-  BadgeCheck,
-  FileText,
+  BarChart3,
+  Menu,
+  X,
+  LogOut,
+  User,
   MessageSquare,
   Bell,
-  ShieldCheck,
-  Banknote,
-  UserCircle,
-  LogOut,
 } from "lucide-react"
-import { cn } from "@/lib/utils"
 
-type Role = "student" | "instructor" | "admin"
+interface SidebarProps {
+  userRole: "student" | "instructor" | "admin"
+}
 
-export function Sidebar({ userRole }: { userRole: Role }) {
+const navigationItems = {
+  student: [
+    { name: "Dashboard", href: "/dashboard/student", icon: BarChart3 },
+    { name: "Mis Cursos", href: "/dashboard/student/courses", icon: BookOpen },
+    { name: "Certificados", href: "/dashboard/student/certificates", icon: Award },
+    { name: "Foros", href: "/dashboard/student/forums", icon: MessageSquare },
+    { name: "Notificaciones", href: "/dashboard/student/notifications", icon: Bell },
+    { name: "Perfil", href: "/dashboard/student/profile", icon: User },
+    { name: "Configuración", href: "/dashboard/student/settings", icon: Settings },
+  ],
+  instructor: [
+    { name: "Dashboard", href: "/dashboard/instructor", icon: BarChart3 },
+    { name: "Mis Cursos", href: "/dashboard/instructor/courses", icon: BookOpen },
+    { name: "Videos", href: "/dashboard/instructor/videos", icon: Video },
+    { name: "Estudiantes", href: "/dashboard/instructor/students", icon: Users },
+    { name: "Certificados", href: "/dashboard/instructor/certificates", icon: Award },
+  ],
+  admin: [
+    { name: "Dashboard", href: "/dashboard/admin", icon: BarChart3 },
+    { name: "Usuarios", href: "/dashboard/admin/users", icon: Users },
+    { name: "Cursos", href: "/dashboard/admin/courses", icon: BookOpen },
+    { name: "Pagos", href: "/dashboard/admin/payments", icon: CreditCard },
+    { name: "Certificados", href: "/dashboard/admin/certificates", icon: Award },
+    { name: "Configuración", href: "/dashboard/admin/settings", icon: Settings },
+  ],
+}
+
+export function Sidebar({ userRole }: SidebarProps) {
+  const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
-  const router = useRouter();
-
-  // Menú de navegación para estudiantes
-  const studentItems = [
-    { label: "Inicio", href: "/dashboard/student", icon: LayoutDashboard },
-    { label: "Mis Cursos", href: "/dashboard/student/courses", icon: BookOpen },
-    { label: "Certificados", href: "/dashboard/student/certificates", icon: CheckCircle2 },
-    { label: "Mi Perfil", href: "/dashboard/student/profile", icon: UserCircle },
-    { label: "Foros", href: "/dashboard/student/discussions", icon: MessageSquare },
-    { label: "Notificaciones", href: "/dashboard/student/notifications", icon: Bell },
-    { label: "Configuración", href: "/dashboard/student/settings", icon: Settings },
-  ]
-
-  // Menú de navegación para instructores
-  const instructorItems = [
-    { label: "Inicio", href: "/dashboard/instructor", icon: LayoutDashboard },
-    { label: "Mis Cursos", href: "/dashboard/instructor/courses", icon: Library },
-    { label: "Estudiantes", href: "/dashboard/instructor/students", icon: Users },
-    { label: "Evaluaciones", href: "/dashboard/instructor/quizzes", icon: FileText },
-    { label: "Reseñas", href: "/dashboard/instructor/reviews", icon: BadgeCheck },
-    { label: "Analítica", href: "/dashboard/instructor/analytics", icon: BarChart2 },
-    { label: "Configuración", href: "/dashboard/instructor/settings", icon: Settings },
-  ]
-
-  // Menú de navegación para administradores
-  const adminItems = [
-    { label: "Panel", href: "/dashboard/admin", icon: LayoutDashboard },
-    { label: "Usuarios", href: "/dashboard/admin/users", icon: Users },
-    { label: "Cursos", href: "/dashboard/admin/courses", icon: Library },
-    { label: "Pagos", href: "/dashboard/admin/payments", icon: Banknote },
-    { label: "Moderación", href: "/dashboard/admin/moderation", icon: ShieldCheck },
-    { label: "Analítica", href: "/dashboard/admin/analytics", icon: BarChart2 },
-    { label: "Configuración", href: "/dashboard/admin/settings", icon: Settings },
-  ]
-
-  // Selecciona el menú apropiado según el rol del usuario
-  const items = userRole === "student" ? studentItems : userRole === "instructor" ? instructorItems : adminItems
-//MANEJO DE CIERRE DE SESION
-const handleLogout = async () => {
-  try {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    router.push('/auth/login'); // Redirige al login
-    router.refresh(); // Refresca la ruta para limpiar estado
-  } catch (error) {
-    console.error('Error al cerrar sesión:', error);
-  }
-};
+  const items = navigationItems[userRole]
 
   return (
-    // Sidebar fijo en el lado izquierdo, oculto en móvil
-    <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 shrink-0 border-r bg-white md:block">
-      <div className="flex h-full flex-col">
-        {/* Logo y nombre de la plataforma */}
-        <div className="flex h-16 items-center border-b px-4">
-          <Link href="/" className="flex items-center gap-2">
-            <GraduationCap className="h-6 w-6 text-purple-700" />
-            <span className="text-lg font-bold text-gray-900">Dental LMS</span>
-          </Link>
-        </div>
+    <>
+      {/* Mobile menu button */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="fixed top-4 left-4 z-50 md:hidden"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+      </Button>
 
-        {/* Navegación principal con scroll */}
-        <nav className="flex-1 space-y-1 overflow-y-auto p-3">
-          {items.map((item) => {
-            const Icon = item.icon
-            // Determina si la ruta actual coincide con el item (exacta o subruta)
-            const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
-            return (
+      {/* Sidebar */}
+      <div
+        className={cn(
+          "fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-200 transform transition-transform duration-200 ease-in-out md:translate-x-0",
+          isOpen ? "translate-x-0" : "-translate-x-full",
+        )}
+      >
+        <div className="flex flex-col h-full">
+          {/* Logo */}
+          <div className="flex items-center px-6 py-4 border-b border-gray-200">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-purple-800 rounded-lg flex items-center justify-center">
+                <BookOpen className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-xl font-bold text-gray-900">DentalEdu</span>
+            </div>
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 px-4 py-6 space-y-2">
+            {items.map((item) => {
+              const Icon = item.icon
+              const isActive = pathname === item.href
+
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors",
+                    isActive
+                      ? "bg-purple-50 text-purple-800 border-r-2 border-purple-800"
+                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
+                  )}
+                  onClick={() => setIsOpen(false)}
+                >
+                  <Icon className="w-5 h-5 mr-3" />
+                  {item.name}
+                </Link>
+              )
+            })}
+          </nav>
+
+          {/* User menu */}
+          <div className="px-4 py-4 border-t border-gray-200">
+            <div className="space-y-2">
               <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
-                  // Estilos diferentes para item activo vs inactivo
-                  isActive ? "bg-purple-50 text-purple-900" : "text-gray-700 hover:bg-gray-50 hover:text-gray-900",
-                )}
+                href="/"
+                className="flex items-center px-3 py-2 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 hover:text-gray-900"
+                onClick={() => setIsOpen(false)}
               >
-                <Icon className={cn("h-4 w-4", isActive ? "text-purple-800" : "text-gray-500")} />
-                <span className="font-medium">{item.label}</span>
+                <LogOut className="w-5 h-5 mr-3" />
+                Cerrar Sesión
               </Link>
-            )
-          })}
-        </nav>
-
-        {/* Footer con información del rol actual */}
-        <div className="border-t p-3">
-          <button
-              onClick={handleLogout}
-              className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-red-600 transition-colors hover:bg-red-50 hover:text-red-700"
-          >
-            <LogOut className="h-4 w-4" />
-            <span className="font-medium">Cerrar Sesión</span>
-          </button>
-
-          <div className="rounded-lg bg-gray-50 p-3 text-xs text-gray-600">
-            Sesión como:{" "}
-            <span className="font-medium capitalize">{userRole === "admin" ? "Administrador" : userRole}</span>
+            </div>
           </div>
         </div>
       </div>
-    </aside>
+
+      {/* Overlay */}
+      {isOpen && (
+        <div className="fixed inset-0 z-30 bg-black bg-opacity-50 md:hidden" onClick={() => setIsOpen(false)} />
+      )}
+    </>
   )
 }
