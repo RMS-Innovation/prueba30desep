@@ -41,6 +41,7 @@ const navigationItems = {
     { name: "Videos", href: "/dashboard/instructor/videos", icon: Video },
     { name: "Estudiantes", href: "/dashboard/instructor/students", icon: Users },
     { name: "Certificados", href: "/dashboard/instructor/certificates", icon: Award },
+    { name: "Perfil", href: "/dashboard/instructor/profile", icon: User },
   ],
   admin: [
     { name: "Dashboard", href: "/dashboard/admin", icon: BarChart3 },
