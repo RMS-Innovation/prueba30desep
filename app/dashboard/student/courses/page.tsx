@@ -11,6 +11,7 @@ import { Clock, Users, Star, Play, Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { StudentAvatar } from "@/components/ui/student-avatar"
+import { hasCourseStarted, calculateProgressPercentage } from "@/lib/progress-tracker"
 
 interface Course {
   id: number
@@ -40,61 +41,61 @@ export default function StudentCoursesPage() {
       id: 1,
       title: "Anatomía Dental Avanzada",
       description: "Curso completo sobre anatomía dental con casos clínicos reales",
-      progress: 72,
-      totalLessons: 12,
-      completedLessons: 9,
+      progress: 0,
+      totalLessons: 7, // Updated to match actual content: 5 videos + 2 quizzes
+      completedLessons: 0,
       instructor: "Dr. María González",
-      thumbnail: "/dental-anatomy-course.png",
+      thumbnail: "/dental-anatomy-course.jpg",
       duration: "8 horas",
       students: 245,
       rating: 4.8,
       category: "anatomia",
-      status: "in_progress",
+      status: "not_started",
     },
     {
       id: 2,
       title: "Técnicas de Endodoncia",
       description: "Aprende las técnicas más avanzadas en endodoncia moderna",
-      progress: 45,
-      totalLessons: 15,
-      completedLessons: 7,
+      progress: 0,
+      totalLessons: 1, // Updated to match actual content
+      completedLessons: 0,
       instructor: "Dr. Carlos Ruiz",
-      thumbnail: "/endodontics-course.png",
+      thumbnail: "/endodontics-course.jpg",
       duration: "12 horas",
       students: 189,
       rating: 4.9,
       category: "endodoncia",
-      status: "in_progress",
+      status: "not_started",
     },
     {
       id: 3,
       title: "Prostodoncia Digital",
       description: "Domina las herramientas digitales en prostodoncia",
-      progress: 100,
+      progress: 0,
       totalLessons: 10,
-      completedLessons: 10,
+      completedLessons: 0,
       instructor: "Dr. Ana López",
-      thumbnail: "/digital-prosthodontics.png",
+      thumbnail: "/digital-prosthodontics.jpg",
       duration: "6 horas",
       students: 156,
       rating: 4.7,
       category: "prostodoncia",
-      status: "completed",
+      status: "not_started",
     },
     {
       id: 4,
       title: "Ortodoncia Moderna",
       description: "Técnicas actuales en ortodoncia y aparatología",
-      progress: 25,
+      progress: 0,
       totalLessons: 18,
-      completedLessons: 4,
+      completedLessons: 0,
       instructor: "Dr. Luis Martín",
-      thumbnail: "/orthodontics-course.png",
+      thumbnail: "/orthodontics-course.jpg",
       duration: "15 horas",
       students: 203,
       rating: 4.6,
       category: "ortodoncia",
-      status: "in_progress",
+      status: "not_started",
     },
     {
       id: 5,
@@ -104,7 +105,7 @@ export default function StudentCoursesPage() {
       totalLessons: 14,
       completedLessons: 0,
       instructor: "Dr. Carmen Silva",
-      thumbnail: "/periodontics-course.png",
+      thumbnail: "/periodontics-course.jpg",
       duration: "10 horas",
       students: 178,
       rating: 4.5,
@@ -117,8 +118,29 @@ export default function StudentCoursesPage() {
     const loadCourses = async () => {
       setLoading(true)
       try {
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-        setCourses(mockCourses)
+        await new Promise((resolve) => setTimeout(resolve, 500))
+
+        const coursesWithProgress = mockCourses.map((course) => {
+          const hasStarted = hasCourseStarted(course.id)
+          const progress = calculateProgressPercentage(course.id, course.totalLessons)
+          const completedLessons = Math.round((progress / 100) * course.totalLessons)
+
+          let status: "in_progress" | "completed" | "not_started" = "not_started"
+          if (progress === 100) {
+            status = "completed"
+          } else if (progress > 0) {
+            status = "in_progress"
+          }
+
+          return {
+            ...course,
+            progress,
+            completedLessons,
+            status,
+          }
+        })
+
+        setCourses(coursesWithProgress)
       } catch (error) {
         console.error("Error loading courses:", error)
         setCourses(mockCourses)

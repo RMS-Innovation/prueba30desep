@@ -193,10 +193,6 @@ export default async function StudentCertificates() {
                         <Eye className="w-4 h-4 mr-1" />
                         Ver
                       </Button>
-                      <Button size="sm" variant="outline">
-                        <Share2 className="w-4 h-4 mr-1" />
-                        Compartir
-                      </Button>
                     </div>
                   </div>
                 ))}
