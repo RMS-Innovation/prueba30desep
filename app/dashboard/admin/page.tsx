@@ -152,7 +152,7 @@ export default async function AdminDashboardPage() {
                           <div className="flex items-center space-x-4">
                              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-700 rounded-full flex items-center justify-center">
                                <span className="text-white font-semibold text-sm">
-                                 {user.name.split(" ").map(n => n[0]).join("").slice(0,2).toUpperCase()}
+                                 {user.name.split(" ").map((n: any[]) => n[0]).join("").slice(0,2).toUpperCase()}
                                </span>
                              </div>
                              <div>
