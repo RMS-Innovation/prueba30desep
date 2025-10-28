@@ -1,77 +1,134 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { UsersTable } from "@/components/admin/users-table"
-import { getSupabaseServerClient } from "@/lib/supabase/server"
-import { Users, GraduationCap } from "lucide-react"
+// app/(dashboard)/admin/users/page.tsx
 
-async function getUsers() {
-  const supabase = await getSupabaseServerClient()
+"use client"; // <-- ¡Esto lo convierte en un Componente de Cliente!
 
-  const { data: users, error } = await supabase.from("users").select("*").order("created_at", { ascending: false })
+import { useState, useEffect } from "react";
+import { redirect, useRouter } from "next/navigation"; // <-- Importa useRouter
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { useAuth } from "@/lib/auth-utils"; // Importamos el hook de auth
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { UsersTable } from "@/components/admin/users-table"; // Asegúrate que la ruta sea correcta
+import { Users, GraduationCap } from "lucide-react";
 
-  if (error) {
-    console.error("Error fetching users:", error)
-    return []
-  }
-
-  return users || []
+// Definición del tipo User (debe coincidir con el de UsersTable)
+interface User {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  role: string;
+  is_active: boolean;
+  created_at: string;
+  last_login: string | null;
+  profile_image_url: string | null;
 }
 
-async function getStudents() {
-  const supabase = await getSupabaseServerClient()
+export default function UsersPage() {
+  const { user: sessionUser, loading: authLoading } = useAuth(); // Usamos el hook de auth
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [studentUsers, setStudentUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const supabase = createClientComponentClient();
+  const router = useRouter(); // <-- Inicializa el router
 
-  const { data: students, error } = await supabase
-    .from("students")
-    .select(`
-      *,
-      users (
-        id,
-        email,
-        first_name,
-        last_name,
-        is_active,
-        created_at,
-        last_login,
-        profile_image_url
-      )
-    `)
-    .order("created_at", { ascending: false })
+  // Efecto para verificar la sesión y cargar datos
+  useEffect(() => {
+    if (authLoading) return; // Espera a que la autenticación termine de cargar
 
-  if (error) {
-    console.error("Error fetching students:", error)
-    return []
-  }
+    // 1. Verificación de seguridad en el cliente
+    if (!sessionUser || sessionUser.role !== "admin") {
+      redirect("/login/admin"); // Redirige si no es admin
+    }
+    
+    // 2. Obtener los datos de los usuarios
+    const fetchUsers = async () => {
+      setLoading(true);
+      // Obtiene todos los usuarios
+      const { data: usersData, error: usersError } = await supabase
+        .from('users')
+        .select('*')
+        .order("created_at", { ascending: false });
 
-  return students || []
-}
+      // Obtiene solo los estudiantes (con datos de 'users' anidados)
+      const { data: studentsData, error: studentsError } = await supabase
+        .from('students')
+        .select(`*, users ( * )`)
+        .order("created_at", { ascending: false });
 
-export default async function UsersPage() {
-  const allUsers = await getUsers()
-  const students = await getStudents()
+      if (usersError) console.error("Error fetching users:", usersError.message);
+      if (studentsError) console.error("Error fetching students:", studentsError.message);
 
-  // Transform students data for the table
-  const studentUsers = students.map((student: any) => ({
-    id: student.users.id,
-    email: student.users.email,
-    first_name: student.users.first_name,
-    last_name: student.users.last_name,
-    role: "student",
-    is_active: student.users.is_active,
-    created_at: student.users.created_at,
-    last_login: student.users.last_login,
-    profile_image_url: student.users.profile_image_url,
-  }))
+      if (usersData) setAllUsers(usersData as User[]);
+      
+      // Transforma los datos de estudiantes al formato de 'User'
+      const transformedStudents = (studentsData || []).map((student: any) => ({
+        ...student.users, // Expande todos los campos de 'users'
+        role: "student", // Sobrescribe el rol para asegurar
+        is_active: student.users.is_active,
+        created_at: student.users.created_at,
+        last_login: student.users.last_login,
+        profile_image_url: student.users.profile_image_url
+      }));
+      setStudentUsers(transformedStudents as User[]);
 
+      setLoading(false);
+    };
+
+    if (sessionUser) { // Solo busca datos si el usuario es admin
+      fetchUsers();
+    }
+  }, [sessionUser, authLoading, supabase]); // Depende de la sesión
+
+  // ==========================================================
+  // LÓGICA INTERACTIVA: Se define aquí en el Componente de Cliente
+  // ==========================================================
+  
   const handleViewUser = (userId: string) => {
-    console.log("[v0] View user:", userId)
-  }
+    console.log("Viewing user details:", userId);
+    router.push(`/dashboard/admin/users/${userId}`); // Ejemplo de navegación
+  };
 
-  const handleToggleStatus = (userId: string, isActive: boolean) => {
-    console.log("[v0] Toggle user status:", userId, isActive)
-  }
+  const handleToggleStatus = async (userId: string, isActive: boolean) => {
+    const newStatus = !isActive;
+    console.log("Toggling status for user:", userId, "to", newStatus);
+    
+    const { error } = await supabase
+      .from('users')
+      .update({ is_active: newStatus })
+      .eq('id', userId);
+      
+    if (error) {
+      console.error("Error toggling status:", error.message);
+      alert("Error al actualizar el estado.");
+    } else {
+      // Actualiza el estado localmente para reflejar el cambio
+      setAllUsers(allUsers.map(u => u.id === userId ? { ...u, is_active: newStatus } : u));
+      setStudentUsers(studentUsers.map(u => u.id === userId ? { ...u, is_active: newStatus } : u));
+    }
+  };
 
   const handleSendEmail = (userId: string) => {
-    console.log("[v0] Send email to user:", userId)
+    const user = allUsers.find(u => u.id === userId) || studentUsers.find(u => u.id === userId);
+    if (user) {
+      console.log("Sending email to:", user.email);
+      window.location.href = `mailto:${user.email}`;
+    }
+  };
+  
+  // ==========================================================
+  // FIN DE LA LÓGICA INTERACTIVA
+  // ==========================================================
+
+  if (loading || authLoading) {
+    return (
+      <div className="space-y-6 p-6">
+        <div>
+          <h1 className="text-3xl font-bold">User Management</h1>
+          <p className="text-muted-foreground">Cargando...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -99,7 +156,7 @@ export default async function UsersPage() {
             <GraduationCap className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{students.length}</div>
+            <div className="text-2xl font-bold">{studentUsers.length}</div>
             <p className="text-xs text-muted-foreground">Active student accounts</p>
           </CardContent>
         </Card>
@@ -118,6 +175,7 @@ export default async function UsersPage() {
               <CardDescription>View and manage all registered users on the platform</CardDescription>
             </CardHeader>
             <CardContent>
+              {/* Ahora es válido pasar estas funciones */}
               <UsersTable
                 users={allUsers}
                 onViewUser={handleViewUser}
@@ -135,6 +193,7 @@ export default async function UsersPage() {
               <CardDescription>View and manage student accounts and their progress</CardDescription>
             </CardHeader>
             <CardContent>
+              {/* Ahora es válido pasar estas funciones */}
               <UsersTable
                 users={studentUsers}
                 onViewUser={handleViewUser}
@@ -146,5 +205,5 @@ export default async function UsersPage() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }
