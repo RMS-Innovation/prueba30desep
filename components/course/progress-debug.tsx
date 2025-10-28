@@ -67,7 +67,7 @@ export function ProgressDebug({ courseId, modules }: ProgressDebugProps) {
                   <span className="flex-1 truncate">{item.title}</span>
                   {videoProgress && (
                     <span className="text-gray-500">
-                      {Math.round((videoProgress.lastPosition / videoProgress.duration) * 100)}%
+                      {Math.round((videoProgress.lastPosition / videoProgress.totalSeconds) * 100)}%
                     </span>
                   )}
                 </div>
