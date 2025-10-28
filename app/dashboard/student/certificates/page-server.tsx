@@ -1,15 +1,11 @@
-"use client"
-
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { getSimpleSession } from "@/lib/simple-auth"
+import { redirect } from "next/navigation"
 import { Sidebar } from "@/components/layout/sidebar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Award, Download, Eye, Calendar, CheckCircle } from "lucide-react"
 import { StudentAvatar } from "@/components/ui/student-avatar"
-import { CertificateViewerModal } from "@/components/certificate/certificate-viewer-modal"
-import { calculateProgressPercentage } from "@/lib/progress-tracker"
 
 interface Certificate {
   id: number
@@ -30,78 +26,70 @@ interface CourseInProgress {
   instructor: string
 }
 
-export default function StudentCertificates() {
-  const router = useRouter()
-  const [selectedCertificate, setSelectedCertificate] = useState<Certificate | null>(null)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [coursesInProgress, setCoursesInProgress] = useState<CourseInProgress[]>([])
+export default async function StudentCertificates() {
+  const session = await getSimpleSession()
 
-  const certificates: Certificate[] = [
-    {
-      id: 1,
-      courseTitle: "Prostodoncia Digital",
-      issueDate: "2024-01-15",
-      certificateId: "PD-2024-001247",
-      instructor: "Dr. Ana López",
-      grade: "Excelente",
-      status: "completed",
-      thumbnail: "/certificate-prosthodontics.png",
-    },
-    {
-      id: 2,
-      courseTitle: "Técnicas de Endodoncia Básica",
-      issueDate: "2023-12-08",
-      certificateId: "TE-2023-000892",
-      instructor: "Dr. Carlos Ruiz",
-      grade: "Muy Bueno",
-      status: "completed",
-      thumbnail: "/certificate-endodontics.png",
-    },
-  ]
+  if (!session?.user || session.user.role !== "student") {
+    redirect("/auth/login")
+  }
 
-  const coursesData = [{ id: 1, title: "Anatomía Dental Avanzada", totalLessons: 7, instructor: "Dr. María González" }]
+  let certificates: Certificate[] = []
+  let inProgress: CourseInProgress[] = []
 
-  useEffect(() => {
-    const loadProgress = () => {
-      const progressData = coursesData.map((course) => {
-        const progress = calculateProgressPercentage(course.id, course.totalLessons)
-        return {
-          id: course.id,
-          courseTitle: course.title,
-          progress,
-          estimatedCompletion: "2024-02-20",
-          instructor: course.instructor,
-        }
-      })
-      setCoursesInProgress(progressData)
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/student/certificates`,
+      {
+        headers: {
+          Cookie: `simple-session=${session.user.id}`,
+        },
+      },
+    )
+
+    if (response.ok) {
+      const data = await response.json()
+      certificates = data.certificates || []
+      inProgress = data.inProgress || []
     }
-
-    loadProgress()
-
-    const interval = setInterval(loadProgress, 2000)
-    return () => clearInterval(interval)
-  }, [])
-
-  const studentName = "Juan Pérez"
-
-  const handleViewCertificate = (cert: Certificate) => {
-    setSelectedCertificate(cert)
-    setIsModalOpen(true)
+  } catch (error) {
+    console.log("API not available, using mock data")
   }
 
-  const handleDownloadCertificate = (cert: Certificate) => {
-    setSelectedCertificate(cert)
-    setIsModalOpen(true)
-    setTimeout(() => {
-      const printButton = document.getElementById("certificate-download-trigger")
-      if (printButton) {
-        printButton.click()
-      }
-    }, 500)
+  if (certificates.length === 0) {
+    certificates = [
+      {
+        id: 1,
+        courseTitle: "Prostodoncia Digital",
+        issueDate: "2024-01-15",
+        certificateId: "PD-2024-001247",
+        instructor: "Dr. Ana López",
+        grade: "Excelente",
+        status: "completed",
+        thumbnail: "/certificate-prosthodontics.png",
+      },
+      {
+        id: 2,
+        courseTitle: "Técnicas de Endodoncia Básica",
+        issueDate: "2023-12-08",
+        certificateId: "TE-2023-000892",
+        instructor: "Dr. Carlos Ruiz",
+        grade: "Muy Bueno",
+        status: "completed",
+        thumbnail: "/certificate-endodontics.png",
+      },
+    ]
   }
 
-  const handleContinueCourse = (courseId: number) => {
-    router.push(`/dashboard/student/course/${courseId}`)
+  if (inProgress.length === 0) {
+    inProgress = [
+      {
+        id: 3,
+        courseTitle: "Anatomía Dental Avanzada",
+        progress: 72,
+        estimatedCompletion: "2024-02-20",
+        instructor: "Dr. María González",
+      },
+    ]
   }
 
   return (
@@ -110,6 +98,7 @@ export default function StudentCertificates() {
 
       <div className="md:ml-64">
         <div className="p-6">
+          {/* Header */}
           <div className="mb-8">
             <div className="flex items-center space-x-4 mb-4">
               <StudentAvatar size="lg" />
@@ -120,6 +109,7 @@ export default function StudentCertificates() {
             </div>
           </div>
 
+          {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <Card>
               <CardContent className="p-6">
@@ -142,7 +132,7 @@ export default function StudentCertificates() {
                     <CheckCircle className="w-6 h-6 text-blue-600" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-gray-900">{coursesInProgress.length}</p>
+                    <p className="text-2xl font-bold text-gray-900">{inProgress.length}</p>
                     <p className="text-sm text-gray-600">En Progreso</p>
                   </div>
                 </div>
@@ -164,6 +154,7 @@ export default function StudentCertificates() {
             </Card>
           </div>
 
+          {/* Completed Certificates */}
           <Card className="mb-8">
             <CardHeader>
               <CardTitle className="flex items-center">
@@ -194,15 +185,11 @@ export default function StudentCertificates() {
                     </div>
 
                     <div className="flex space-x-2">
-                      <Button
-                        size="sm"
-                        className="flex-1 bg-purple-800 hover:bg-purple-900"
-                        onClick={() => handleDownloadCertificate(cert)}
-                      >
+                      <Button size="sm" className="flex-1 bg-purple-800 hover:bg-purple-900">
                         <Download className="w-4 h-4 mr-1" />
                         Descargar
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => handleViewCertificate(cert)}>
+                      <Button size="sm" variant="outline">
                         <Eye className="w-4 h-4 mr-1" />
                         Ver
                       </Button>
@@ -213,6 +200,7 @@ export default function StudentCertificates() {
             </CardContent>
           </Card>
 
+          {/* In Progress */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
@@ -222,7 +210,7 @@ export default function StudentCertificates() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {coursesInProgress.map((course: CourseInProgress) => (
+                {inProgress.map((course: CourseInProgress) => (
                   <div key={course.id} className="border rounded-lg p-4 bg-white">
                     <div className="flex items-center justify-between mb-3">
                       <div>
@@ -245,7 +233,7 @@ export default function StudentCertificates() {
                       <span>
                         Finalización estimada: {new Date(course.estimatedCompletion).toLocaleDateString("es-ES")}
                       </span>
-                      <Button size="sm" variant="outline" onClick={() => handleContinueCourse(course.id)}>
+                      <Button size="sm" variant="outline">
                         Continuar Curso
                       </Button>
                     </div>
@@ -256,15 +244,6 @@ export default function StudentCertificates() {
           </Card>
         </div>
       </div>
-
-      {selectedCertificate && (
-        <CertificateViewerModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          certificate={selectedCertificate}
-          studentName={studentName}
-        />
-      )}
     </div>
   )
 }
