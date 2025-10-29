@@ -84,15 +84,11 @@ export default function InstructorVideosPage() {
 
             <TabsContent value="list">
               <Card>
-                <CardHeader>
-                  <CardTitle>Videos del Curso</CardTitle>
-                </CardHeader>
                 <CardContent>
                   <VideoList courseId={selectedCourseId} canEdit={true} />
                 </CardContent>
               </Card>
             </TabsContent>
-
             <TabsContent value="upload">
               <VideoUpload
                 courseId={selectedCourseId}
