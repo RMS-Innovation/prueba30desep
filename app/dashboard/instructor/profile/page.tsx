@@ -232,10 +232,7 @@ export default function InstructorProfile() {
                       <span className="text-sm text-gray-600">Estudiantes</span>
                       <span className="text-sm font-semibold text-gray-900">1,234</span>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Calificación</span>
-                      <span className="text-sm font-semibold text-purple-800">4.8 ⭐</span>
-                    </div>
+                    
                   </div>
                 </div>
               </CardContent>
@@ -488,7 +485,7 @@ export default function InstructorProfile() {
                 </div>
 
                 <div>
-                  <Label htmlFor="expertise">Áreas de Expertise para Enseñar</Label>
+                  <Label htmlFor="expertise">Áreas de Experiencia para Enseñar</Label>
                   <Textarea
                     id="expertise"
                     placeholder="Técnicas quirúrgicas, diagnóstico por imagen, tratamientos estéticos..."
@@ -508,29 +505,7 @@ export default function InstructorProfile() {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="website">Sitio Web Personal</Label>
-                    <Input
-                      id="website"
-                      type="url"
-                      placeholder="https://tusitio.com"
-                      value={teachingData.website}
-                      onChange={(e) => setTeachingData({ ...teachingData, website: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="linkedin">LinkedIn</Label>
-                    <Input
-                      id="linkedin"
-                      type="url"
-                      placeholder="https://linkedin.com/in/tuperfil"
-                      value={teachingData.linkedin}
-                      onChange={(e) => setTeachingData({ ...teachingData, linkedin: e.target.value })}
-                    />
-                  </div>
-                </div>
-
+               
                 <Button type="submit" className="w-full bg-purple-800 hover:bg-purple-900" disabled={isLoading}>
                   {isLoading ? (
                     <>
