@@ -24,23 +24,7 @@ import {
 } from "lucide-react"
 import { StudentAvatar } from "@/components/ui/student-avatar"
 import Link from "next/link"
-
-interface ForumPost {
-  id: string
-  title: string
-  content: string
-  authorName: string
-  authorAvatar?: string
-  courseTitle: string
-  courseId: string
-  createdAt: Date
-  replies: number
-  likes: number
-  views: number
-  isPinned: boolean
-  isResolved: boolean
-  tags: string[]
-}
+import { getAllPosts, createPost, getCurrentUser, type ForumPost } from "@/lib/forum-storage"
 
 export default function StudentForumsPage() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -53,72 +37,23 @@ export default function StudentForumsPage() {
     title: "",
     content: "",
     courseId: "",
+    courseTitle: "",
     tags: "",
   })
 
-  const mockPosts: ForumPost[] = [
-    {
-      id: "1",
-      title: "¿Cuál es la mejor técnica para preparación de conductos?",
-      content:
-        "Estoy estudiando diferentes técnicas de preparación de conductos radiculares y me gustaría conocer sus experiencias...",
-      authorName: "María González",
-      courseTitle: "Técnicas de Endodoncia",
-      courseId: "2",
-      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
-      replies: 12,
-      likes: 24,
-      views: 156,
-      isPinned: true,
-      isResolved: false,
-      tags: ["endodoncia", "técnicas", "conductos"],
-    },
-    {
-      id: "2",
-      title: "Duda sobre anatomía del primer molar superior",
-      content: "Tengo una pregunta sobre la anatomía radicular del primer molar superior. ¿Alguien puede ayudarme?",
-      authorName: "Carlos Ruiz",
-      courseTitle: "Anatomía Dental Avanzada",
-      courseId: "1",
-      createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000),
-      replies: 8,
-      likes: 15,
-      views: 89,
-      isPinned: false,
-      isResolved: true,
-      tags: ["anatomía", "molares"],
-    },
-    {
-      id: "3",
-      title: "Recomendaciones de materiales para prostodoncia digital",
-      content: "¿Qué materiales recomiendan para trabajar con prostodoncia digital? Estoy empezando en este campo...",
-      authorName: "Ana López",
-      courseTitle: "Prostodoncia Digital",
-      courseId: "3",
-      createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
-      replies: 20,
-      likes: 35,
-      views: 234,
-      isPinned: false,
-      isResolved: false,
-      tags: ["prostodoncia", "materiales", "digital"],
-    },
-  ]
+  const loadPosts = () => {
+    setLoading(true)
+    try {
+      const allPosts = getAllPosts()
+      setPosts(allPosts)
+    } catch (error) {
+      console.error("Error loading forum posts:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    const loadPosts = async () => {
-      setLoading(true)
-      try {
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-        setPosts(mockPosts)
-      } catch (error) {
-        console.error("Error loading forum posts:", error)
-        setPosts(mockPosts)
-      } finally {
-        setLoading(false)
-      }
-    }
-
     loadPosts()
   }, [])
 
@@ -137,18 +72,38 @@ export default function StudentForumsPage() {
     return matchesSearch && matchesCourse && matchesStatus
   })
 
-  const handleCreatePost = async () => {
+  const handleCreatePost = () => {
     if (!newPost.title || !newPost.content || !newPost.courseId) {
+      alert("Por favor completa todos los campos requeridos")
       return
     }
 
-    // TODO: Implement API call to create post
-    console.log("Creating post:", newPost)
+    const currentUser = getCurrentUser()
+    const tagsArray = newPost.tags
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter((tag) => tag.length > 0)
+
+    createPost({
+      title: newPost.title,
+      content: newPost.content,
+      courseId: newPost.courseId,
+      courseTitle: newPost.courseTitle,
+      authorName: currentUser,
+      tags: tagsArray,
+      isPinned: false,
+      isResolved: false,
+    })
+
+    // Reload posts to show the new one
+    loadPosts()
+
     setIsCreateDialogOpen(false)
-    setNewPost({ title: "", content: "", courseId: "", tags: "" })
+    setNewPost({ title: "", content: "", courseId: "", courseTitle: "", tags: "" })
   }
 
-  const getTimeAgo = (date: Date) => {
+  const getTimeAgo = (dateString: string) => {
+    const date = new Date(dateString)
     const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000)
     if (seconds < 60) return "hace un momento"
     const minutes = Math.floor(seconds / 60)
@@ -203,10 +158,17 @@ export default function StudentForumsPage() {
                   </DialogHeader>
                   <div className="space-y-4">
                     <div>
-                      <Label htmlFor="course">Curso</Label>
+                      <Label htmlFor="course">Curso *</Label>
                       <Select
                         value={newPost.courseId}
-                        onValueChange={(value) => setNewPost({ ...newPost, courseId: value })}
+                        onValueChange={(value) => {
+                          const courseMap: Record<string, string> = {
+                            "1": "Anatomía Dental Avanzada",
+                            "2": "Técnicas de Endodoncia",
+                            "3": "Prostodoncia Digital",
+                          }
+                          setNewPost({ ...newPost, courseId: value, courseTitle: courseMap[value] || "" })
+                        }}
                       >
                         <SelectTrigger className="mt-2">
                           <SelectValue placeholder="Selecciona un curso" />
@@ -219,7 +181,7 @@ export default function StudentForumsPage() {
                       </Select>
                     </div>
                     <div>
-                      <Label htmlFor="title">Título</Label>
+                      <Label htmlFor="title">Título *</Label>
                       <Input
                         id="title"
                         placeholder="¿Cuál es tu pregunta o tema?"
@@ -229,7 +191,7 @@ export default function StudentForumsPage() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="content">Descripción</Label>
+                      <Label htmlFor="content">Descripción *</Label>
                       <Textarea
                         id="content"
                         placeholder="Describe tu pregunta o tema en detalle..."
@@ -280,8 +242,8 @@ export default function StudentForumsPage() {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600">Mis Respuestas</p>
-                    <p className="text-2xl font-bold text-gray-900">24</p>
+                    <p className="text-sm text-gray-600">Total Respuestas</p>
+                    <p className="text-2xl font-bold text-gray-900">{posts.reduce((sum, p) => sum + p.replies, 0)}</p>
                   </div>
                   <MessageCircle className="w-8 h-8 text-blue-600" />
                 </div>

@@ -6,95 +6,42 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Bell, BookOpen, Award, CreditCard, MessageSquare, CheckCircle2, Trash2, Settings } from "lucide-react"
+import {
+  Bell,
+  BookOpen,
+  Award,
+  CreditCard,
+  MessageSquare,
+  CheckCircle2,
+  Trash2,
+  Settings,
+  Download,
+} from "lucide-react"
 import { StudentAvatar } from "@/components/ui/student-avatar"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
-
-interface Notification {
-  id: string
-  type: "course" | "certificate" | "payment" | "forum" | "system"
-  title: string
-  message: string
-  createdAt: Date
-  read: boolean
-  actionUrl?: string
-  actionLabel?: string
-}
+import {
+  getNotifications,
+  markAsRead,
+  markAllAsRead,
+  deleteNotification,
+  type Notification,
+} from "@/lib/notifications-storage"
+import { downloadCertificateAsPDF } from "@/lib/certificate-download"
 
 export default function StudentNotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<"all" | "unread">("all")
 
-  const mockNotifications: Notification[] = [
-    {
-      id: "1",
-      type: "course",
-      title: "Nuevo módulo disponible",
-      message: 'Se ha agregado un nuevo módulo al curso "Técnicas de Endodoncia"',
-      createdAt: new Date(Date.now() - 30 * 60 * 1000),
-      read: false,
-      actionUrl: "/dashboard/student/course/2",
-      actionLabel: "Ver curso",
-    },
-    {
-      id: "2",
-      type: "certificate",
-      title: "¡Certificado listo!",
-      message: 'Tu certificado de "Prostodoncia Digital" está disponible para descargar',
-      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
-      read: false,
-      actionUrl: "/dashboard/student/certificates",
-      actionLabel: "Descargar",
-    },
-    {
-      id: "3",
-      type: "forum",
-      title: "Nueva respuesta en el foro",
-      message: 'Alguien respondió a tu pregunta en "¿Cuál es la mejor técnica para preparación de conductos?"',
-      createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000),
-      read: true,
-      actionUrl: "/dashboard/student/forums/1",
-      actionLabel: "Ver discusión",
-    },
-    {
-      id: "4",
-      type: "payment",
-      title: "Pago procesado exitosamente",
-      message: "Tu pago de $299.00 MXN ha sido procesado correctamente",
-      createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
-      read: true,
-    },
-    {
-      id: "5",
-      type: "course",
-      title: "Recordatorio de curso",
-      message: 'Llevas 3 días sin avanzar en "Anatomía Dental Avanzada". ¡Continúa tu aprendizaje!',
-      createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-      read: true,
-      actionUrl: "/dashboard/student/course/1",
-      actionLabel: "Continuar",
-    },
-    {
-      id: "6",
-      type: "system",
-      title: "Actualización del sistema",
-      message: "Hemos mejorado la plataforma con nuevas funcionalidades. ¡Descúbrelas!",
-      createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-      read: true,
-    },
-  ]
-
   useEffect(() => {
-    const loadNotifications = async () => {
+    const loadNotifications = () => {
       setLoading(true)
       try {
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-        setNotifications(mockNotifications)
+        const loaded = getNotifications()
+        setNotifications(loaded)
       } catch (error) {
         console.error("Error loading notifications:", error)
-        setNotifications(mockNotifications)
       } finally {
         setLoading(false)
       }
@@ -111,15 +58,44 @@ export default function StudentNotificationsPage() {
   const unreadCount = notifications.filter((n) => !n.read).length
 
   const handleMarkAsRead = (id: string) => {
+    markAsRead(id)
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)))
   }
 
   const handleMarkAllAsRead = () => {
+    markAllAsRead()
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
   }
 
   const handleDelete = (id: string) => {
+    deleteNotification(id)
     setNotifications((prev) => prev.filter((n) => n.id !== id))
+  }
+
+  const handleCertificateDownload = async (notification: Notification) => {
+    if (notification.type !== "certificate" || !notification.metadata?.courseId) return
+
+    try {
+      handleMarkAsRead(notification.id)
+
+      const courseName = notification.message.match(/"([^"]+)"/)?.[1] || "Curso Completado"
+
+      await downloadCertificateAsPDF({
+        studentName: "Juan Pérez",
+        courseTitle: courseName,
+        instructor: "Dr. Ana López",
+        issueDate: new Date().toLocaleDateString("es-ES", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        }),
+        certificateId: notification.metadata.certificateId || `CERT-${Date.now()}`,
+        grade: "Excelente",
+      })
+    } catch (error) {
+      console.error("[v0] Error downloading certificate:", error)
+      alert("Error al descargar el certificado. Por favor, intenta desde la página de certificados.")
+    }
   }
 
   const getNotificationIcon = (type: Notification["type"]) => {
@@ -261,7 +237,16 @@ export default function StudentNotificationsPage() {
                           {!notification.read && <div className="w-2 h-2 bg-purple-600 rounded-full ml-2 mt-2"></div>}
                         </div>
                         <div className="flex items-center space-x-2 mt-3">
-                          {notification.actionUrl && (
+                          {notification.type === "certificate" && notification.actionLabel === "Descargar" ? (
+                            <Button
+                              size="sm"
+                              className="bg-purple-800 hover:bg-purple-900"
+                              onClick={() => handleCertificateDownload(notification)}
+                            >
+                              <Download className="w-3 h-3 mr-1" />
+                              {notification.actionLabel}
+                            </Button>
+                          ) : notification.actionUrl ? (
                             <Link href={notification.actionUrl}>
                               <Button
                                 size="sm"
@@ -271,7 +256,7 @@ export default function StudentNotificationsPage() {
                                 {notification.actionLabel || "Ver más"}
                               </Button>
                             </Link>
-                          )}
+                          ) : null}
                           {!notification.read && (
                             <Button size="sm" variant="outline" onClick={() => handleMarkAsRead(notification.id)}>
                               <CheckCircle2 className="w-3 h-3 mr-1" />
