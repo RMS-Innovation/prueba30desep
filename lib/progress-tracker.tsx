@@ -100,6 +100,14 @@ export function updateVideoProgress(
   const progress = getCourseProgress(courseId)
   if (!progress) return
 
+  // Asegurar que las propiedades existan
+  if (!progress.videoProgress) {
+    progress.videoProgress = {}
+  }
+  if (!progress.completedVideos) {
+    progress.completedVideos = []
+  }
+
   progress.videoProgress[videoId] = {
     videoId,
     watchedSeconds,
@@ -131,9 +139,9 @@ export function getTotalContentItems(courseId: number, courseData?: any): number
   if (!progress) return 0
 
   // Count unique items from both videos and quizzes
-  const totalVideos = Object.keys(progress.videoProgress).length
-  const totalQuizzes = Object.keys(progress.quizProgress).length
-  const completedTotal = progress.completedVideos.length + progress.completedQuizzes.length
+  const totalVideos = progress.videoProgress ? Object.keys(progress.videoProgress).length : 0
+  const totalQuizzes = progress.quizProgress ? Object.keys(progress.quizProgress).length : 0
+  const completedTotal = (progress.completedVideos?.length || 0) + (progress.completedQuizzes?.length || 0)
 
   // Return the maximum to account for all content
   return Math.max(totalVideos + totalQuizzes, completedTotal)
@@ -143,7 +151,10 @@ export function calculateProgressPercentage(courseId: number, totalItems?: numbe
   const progress = getCourseProgress(courseId)
   if (!progress) return 0
 
-  const completedItems = progress.completedVideos.length + progress.completedQuizzes.length
+  // Usar operador de encadenamiento opcional para evitar errores
+  const completedVideosCount = progress.completedVideos?.length || 0
+  const completedQuizzesCount = progress.completedQuizzes?.length || 0
+  const completedItems = completedVideosCount + completedQuizzesCount
 
   // If totalItems is provided, use it; otherwise calculate from progress data
   const total = totalItems || getTotalContentItems(courseId)
@@ -161,7 +172,7 @@ export function getVideoProgress(courseId: number, videoId: number): VideoProgre
   }
 
   const progress = getCourseProgress(courseId)
-  if (!progress) return null
+  if (!progress || !progress.videoProgress) return null
 
   return progress.videoProgress[videoId] || null
 }
@@ -174,7 +185,7 @@ export function hasCourseStarted(courseId: number): boolean {
 // Get resume position for a course
 export function getResumePosition(courseId: number): { videoId: number; position: number } | null {
   const progress = getCourseProgress(courseId)
-  if (!progress || !progress.currentVideoId) return null
+  if (!progress || !progress.currentVideoId || !progress.videoProgress) return null
 
   const videoProgress = progress.videoProgress[progress.currentVideoId]
   return {
@@ -193,6 +204,14 @@ export function updateQuizProgress(
 ): void {
   const progress = getCourseProgress(courseId)
   if (!progress) return
+
+  // Asegurar que las propiedades existan
+  if (!progress.quizProgress) {
+    progress.quizProgress = {}
+  }
+  if (!progress.completedQuizzes) {
+    progress.completedQuizzes = []
+  }
 
   const existingQuizProgress = progress.quizProgress[quizId]
   const attempts = existingQuizProgress ? existingQuizProgress.attempts + 1 : 1
@@ -224,7 +243,7 @@ export function getQuizProgress(courseId: number, quizId: number): QuizProgress 
   }
 
   const progress = getCourseProgress(courseId)
-  if (!progress) return null
+  if (!progress || !progress.quizProgress) return null
 
   return progress.quizProgress[quizId] || null
 }
@@ -232,6 +251,14 @@ export function getQuizProgress(courseId: number, quizId: number): QuizProgress 
 export function markQuizCompleted(courseId: number, quizId: number): void {
   const progress = getCourseProgress(courseId)
   if (!progress) return
+
+  // Asegurar que las propiedades existan
+  if (!progress.completedQuizzes) {
+    progress.completedQuizzes = []
+  }
+  if (!progress.quizProgress) {
+    progress.quizProgress = {}
+  }
 
   if (!progress.completedQuizzes.includes(quizId)) {
     progress.completedQuizzes.push(quizId)
@@ -249,6 +276,14 @@ export function markVideoCompleted(courseId: number, videoId: number): void {
   const progress = getCourseProgress(courseId)
   if (!progress) return
 
+  // Asegurar que las propiedades existan
+  if (!progress.completedVideos) {
+    progress.completedVideos = []
+  }
+  if (!progress.videoProgress) {
+    progress.videoProgress = {}
+  }
+
   if (!progress.completedVideos.includes(videoId)) {
     progress.completedVideos.push(videoId)
   }
@@ -258,4 +293,21 @@ export function markVideoCompleted(courseId: number, videoId: number): void {
   }
 
   saveCourseProgress(progress)
+}
+
+// Función adicional para asegurar que un CourseProgress tenga todas las propiedades necesarias
+export function ensureCourseProgressStructure(progress: CourseProgress): CourseProgress {
+  return {
+    ...progress,
+    completedVideos: progress.completedVideos || [],
+    completedQuizzes: progress.completedQuizzes || [],
+    videoProgress: progress.videoProgress || {},
+    quizProgress: progress.quizProgress || {},
+    currentVideoId: progress.currentVideoId || null,
+    currentModuleId: progress.currentModuleId || null,
+    currentQuizId: progress.currentQuizId || null,
+    progressPercentage: progress.progressPercentage || 0,
+    lastAccessedAt: progress.lastAccessedAt || new Date().toISOString(),
+    timeSpentMinutes: progress.timeSpentMinutes || 0,
+  }
 }
