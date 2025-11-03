@@ -19,7 +19,6 @@ type EnrollmentWithDetails = {
     id: string;
     title: string | null;
     thumbnail_url: string | null;
-    instructor_name: string | null;
   } | null;
 };
 
@@ -54,7 +53,7 @@ export default async function StudentDashboardPage() {
     const studentIdentifier = studentProfile?.id ?? sessionUser.id;
     const { data: reData, error: eError } = await supabase
       .from('enrollments')
-      .select(`id, progress_percentage, courses ( id, title, thumbnail_url, instructor_name )`)
+      .select(`id, progress_percentage, courses ( id, title, thumbnail_url )`)
       .eq('student_id', studentIdentifier)
       .order('last_accessed_at', { ascending: false, nullsFirst: false })
       .limit(3)
@@ -132,9 +131,6 @@ export default async function StudentDashboardPage() {
                  </CardHeader>
                  <CardContent>
                    <div className="space-y-4">
-                    {/* ========================================================== */}
-                    {/* CORRECCIÓN: Se reemplazó el comentario por el div real */}
-                    {/* ========================================================== */}
                      {recentEnrollments.length === 0 && (
                          <div className="text-sm text-gray-600">Todavía no tienes cursos recientes.</div>
                      )}
@@ -142,14 +138,12 @@ export default async function StudentDashboardPage() {
                          const course = enrollment.courses;
                          const progress = enrollment.progress_percentage ?? 0;
                          if (!course) return null;
-                         const instructorName = course.instructor_name || "Instructor";
                          
                          return (
                            <div key={enrollment.id} className="flex items-center space-x-4 p-4 border rounded-lg hover:bg-gray-50">
                              <img src={course.thumbnail_url || "/placeholder.svg"} alt={course.title || "Curso"} className="w-20 h-12 object-cover rounded"/>
                              <div className="flex-1">
                                <h3 className="font-semibold">{course.title}</h3>
-                               <p className="text-sm text-gray-600">Por {instructorName}</p>
                                <div className="flex items-center mt-2">
                                  <div className="flex-1 bg-gray-200 rounded-full h-2 mr-3">
                                    <div className="bg-purple-600 h-2 rounded-full" style={{ width: `${progress}%` }}/>
@@ -179,9 +173,6 @@ export default async function StudentDashboardPage() {
                       <p className="text-sm text-gray-600 mt-4 text-center">Progreso promedio</p>
                   </CardContent>
                 </Card>
-                {/* ========================================================== */}
-                {/* CORRECCIÓN: Se reemplazó el comentario por el contenido real del Card */}
-                {/* ========================================================== */}
                 {nextCertificateCourse?.courses && (
                   <Card>
                     <CardHeader>
