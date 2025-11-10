@@ -41,13 +41,13 @@ export default async function HomePage() {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50">
       {/* Header - Barra de navegación superior */}
       <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-center">{/*centro y no between */}
           {/* Logo y nombre de la plataforma */}
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-purple-700 rounded-xl flex items-center justify-center">
               <Stethoscope className="w-6 h-6 text-white" />
             </div>
-            <div>
+            <div >
               <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
                 Plataforma Educativa Dental
               </h1>
@@ -56,7 +56,7 @@ export default async function HomePage() {
           </div>
 
           {/* Botones de autenticación */}
-          <div className="flex items-center space-x-4">
+          {/* <div className="flex items-center space-x-4">
             <Link href="/auth/login">
               <Button variant="ghost" className="text-purple-700 hover:text-purple-800">
                 Iniciar Sesión
@@ -67,7 +67,7 @@ export default async function HomePage() {
                 Registrarse
               </Button>
             </Link>
-          </div>
+          </div> */}
         </div>
       </header>
 
@@ -102,6 +102,7 @@ export default async function HomePage() {
               </Button>
             </Link>
             <Link href="/courses">
+            
               <Button
                 size="lg"
                 className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-lg px-8 py-3"
@@ -254,14 +255,14 @@ export default async function HomePage() {
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
-            <Button
+            {/* <Button
               size="lg"
               variant="outline"
               className="border-white text-white hover:bg-white hover:text-purple-700 text-lg px-8 py-3 bg-transparent"
             >
               <Shield className="mr-2 w-5 h-5" />
               Ver Planes
-            </Button>
+            </Button> */}
           </div>
         </div>
       </section>
