@@ -25,7 +25,7 @@ export function Header() {
   // Determina qué botones mostrar
   const renderAuthButtons = () => {
     if (loading) {
-      return <div className="h-10 w-24 rounded-md bg-gray-200 animate-pulse" />; // Skeleton loader
+      return <div className="h-10 w-24 rounded-md bg-slate-800 animate-pulse" />; // Skeleton loader
     }
 
     if (user) {
@@ -62,7 +62,7 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-sm">
+    <header className="sticky top-0 z-50 w-full  bg-slate-800 backdrop-blur-sm">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         {/* Logo y nombre (sin cambios) */}
         <Link href="/" className="flex items-center gap-2" onClick={() => setIsMenuOpen(false)}>
@@ -87,7 +87,7 @@ export function Header() {
 
       {/* Menú Desplegable (Pantalla Pequeña) */}
       {isMenuOpen && (
-        <div className="md:hidden border-t border-gray-200 bg-white shadow-lg">
+        <div className="md:hidden border-t border-blue-900/50 bg-slate-800 shadow-lg">
           <div className="flex flex-col space-y-2 p-4">
             {renderAuthButtons()}
           </div>
