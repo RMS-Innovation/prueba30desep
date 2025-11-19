@@ -1,6 +1,6 @@
 // app/(dashboard)/instructor/page.tsx
 
-import { getSimpleSession } from "@/lib/simple-auth";
+import { getSimpleSession } from "@/lib/getSimpleSession";
 import { redirect } from "next/navigation";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";

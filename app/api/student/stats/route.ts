@@ -1,7 +1,7 @@
 // app/api/student/stats/route.ts
 import { NextResponse } from "next/server"
 import { sql } from "@vercel/postgres"
-import { getSimpleSession } from "@/lib/simple-auth"
+import { getSimpleSession } from "@/lib/getSimpleSession"
 
 function getAuth0IdFromSession(session: any): string | null {
   return (

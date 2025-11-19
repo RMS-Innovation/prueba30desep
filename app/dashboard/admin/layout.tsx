@@ -6,7 +6,7 @@ import { AdminSidebar } from "@/components/admin/admin-sidebar";
 // ==========================================================
 // INICIO CORRECCIÓN: Usamos la función de sesión unificada
 // ==========================================================
-import { getSimpleSession } from "@/lib/simple-auth"; // <-- 1. Importa la función correcta
+import { getSimpleSession } from "@/lib/getSimpleSession"; // <-- 1. Importa la función correcta
 // Se elimina: import { getAdminUser } from "@/lib/auth/admin"
 // ==========================================================
 // FIN CORRECCIÓN

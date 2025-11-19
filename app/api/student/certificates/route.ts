@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getSimpleSession } from "@/lib/simple-auth"
-import { createServerSupabaseClient } from "@/lib/supabase"
+import { getSimpleSession } from "@/lib/getSimpleSession"
+import { createServerSupabaseClient } from "@/lib/supabase"//REVISAR RUTA
 
 interface Certificate {
   id: string

@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
-import { getSimpleSession, User } from "@/lib/simple-auth";
+import { getSimpleSession } from "@/lib/getSimpleSession";
 import { Sidebar } from "@/components/layout/sidebar";
 import { StatsCard } from "@/components/dashboard/stats-card";
 import { ProgressRing } from "@/components/dashboard/progress-ring";

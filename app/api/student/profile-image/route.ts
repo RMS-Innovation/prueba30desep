@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createServerSupabaseClient } from "@/lib/supabase"
-import { getSimpleSession } from "@/lib/simple-auth"
+import { createServerSupabaseClient } from "@/lib/supabase"//REVISAR RUTA
+import { getSimpleSession } from "@/lib/getSimpleSession"
 
 export async function GET(request: NextRequest) {
   try {

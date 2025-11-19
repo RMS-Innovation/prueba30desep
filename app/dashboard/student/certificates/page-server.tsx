@@ -1,4 +1,4 @@
-import { getSimpleSession } from "@/lib/simple-auth"
+import { getSimpleSession } from "@/lib/getSimpleSession"
 import { redirect } from "next/navigation"
 import { Sidebar } from "@/components/layout/sidebar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"

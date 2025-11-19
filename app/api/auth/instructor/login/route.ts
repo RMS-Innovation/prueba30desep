@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createServerSupabaseClient } from "@/lib/supabase"
-import { setSimpleSession } from "@/lib/simple-auth"
+import { createServerSupabaseClient } from "@/lib/supabase"//REVISAR RUTA
+import { getSimpleSession } from "@/lib/getSimpleSession"
 import bcrypt from "bcryptjs"
 
 export async function POST(request: NextRequest) {

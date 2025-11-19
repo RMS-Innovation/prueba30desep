@@ -115,10 +115,10 @@ export default function HomePage() {
     <div className="min-h-screen bg-slate-900 text-gray-300 overflow-x-hidden" style={{ fontFamily: 'Inter, sans-serif' }}>
       
       {/* ===== Header Responsivo (Dark Mode / Azul) ===== */}
-      <header className="border-b border-blue-900/50 bg-slate-900/80 backdrop-blur-sm sticky top-0 z-50">
+      <header className=""/*"border-b border-blue-900/50 bg-slate-900/80 backdrop-blur-sm sticky top-0 z-50"*/>
         <div className="container mx-auto px-4 py-4 flex items-center justify-center">
           {/* Logo y nombre */}
-          <Link href="/" className="flex items-center space-x-3" onClick={() => setIsMenuOpen(false)}>
+          {/* <Link href="/" className="flex items-center space-x-3" onClick={() => setIsMenuOpen(false)}>
             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
               <Stethoscope className="w-6 h-6 text-white" />
             </div>
@@ -128,7 +128,7 @@ export default function HomePage() {
               </h1>
               <p className="text-sm text-gray-400 hidden sm:block">Instituto Autónomo del Norte</p>
             </div>
-          </Link>
+          </Link> */}
 
           {/* Botones de autenticación (Pantalla Grande) */}
           <div className="hidden md:flex items-center space-x-2">

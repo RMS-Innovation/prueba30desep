@@ -1,3 +1,4 @@
+// lib/auth.ts
 import { createServerClient as createSupabaseServerClient } from "@supabase/ssr"
 import type { NextRequest } from "next/server"
 import bcrypt from "bcryptjs"
